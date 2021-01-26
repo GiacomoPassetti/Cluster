@@ -50,8 +50,8 @@ def product_state(L):
         ps.append('full')
     return ps
 
-def displacement_op(alpha):
-    D=npc.expm(alpha*psi.sites[0].Bd-np.conj(alpha)*psi.sites[0].B)
+def displacement_op(alpha,sites):
+    D=npc.expm(alpha*sites[0].Bd-np.conj(alpha)*sites[0].B)
     return D
 
 def mixed_state(L):
@@ -136,85 +136,150 @@ def Suz_trot_real(psi, dt, N_steps, H_bond_tebd):
         trunc_err += psi.compress_svd(trunc_param)
         print(psi)
     return trunc_err
-        
+ 
+
+def time_ev_X(psi, D_a, tmax, dt):   #AKA cosine plotter
+   psi.apply_local_op(0, D_a)
+   x_t=[]
+   t=np.linspace(0, tmax, int(tmax/dt))
+   for i in range(int(tmax/dt)):
+      print("time_step:", i)
+      Suz_trot_real(psi, dt, 1, H_bond_tebd)
+      x_t.append(psi.expectation_value(X, [0]))
+   
+   plt.plot(t, x_t)
+   plt.xlabel('t')
+   plt.ylabel('<X(t)>')
+   plt.text(0,0,r'$\Omega=$'+str(Omega))
+   plt.text(0,-0.5,r'$g=$'+str(g))
+   plt.show()
+
+def coherent_state(alpha_max, Nmax_1, Nmax_2):
+    
+    n_av_1=[]
+    n_sq_1=[]
+    sit1 = sites(L,Nmax_1)
+    sit2 = sites(L,Nmax_2)
+    x=np.arange(0,alpha_max,alpha_max/20)
+
+    for a in list(np.arange(0,alpha_max,alpha_max/20)):
+        Da=displacement_op(a, sit1)
+        psi=MPS.from_product_state(sit1, ps)
+        psi.apply_local_op(0, Da)
+        n_av_1.append(psi.expectation_value(sit1[0].N, [0]))
+        n_sq_1.append(psi.expectation_value(sit1[0].NN, [0])-psi.expectation_value(sit1[0].N, [0])**2)
+    n_av_2=[]
+    n_sq_2=[]
+    
+    for a in list(np.arange(0,alpha_max,alpha_max/20)):
+        Da=displacement_op(a, sit2)
+        psi=MPS.from_product_state(sit2, ps)
+        psi.apply_local_op(0, Da)
+        print(psi.expectation_value(sit2[0].N, [0]))
+        n_av_2.append(psi.expectation_value(sit2[0].N, [0]))
+        n_sq_2.append(psi.expectation_value(sit2[0].NN, [0])-psi.expectation_value(sit2[0].N, [0])**2)
+    fig, axs = plt.subplots(2, 2)
+    axs[0, 0].plot(x,n_av_1 )
+    axs[0, 0].plot(x,x**2, 'tab:orange' )
+    axs[0, 0].set_title('<N>  Nmax=8')
+    axs[0, 1].plot(x,n_sq_1)
+    axs[0, 1].plot(x,x**2, 'tab:orange')
+    axs[0, 1].set_title(r'$\sigma_{N}$')
+    axs[1, 0].plot(x, n_av_2, 'tab:green')
+    axs[1, 0].plot(x, x**2, 'tab:orange')
+    axs[1, 0].set_title('<N> Nmax=12')
+    axs[1, 1].plot(x, n_sq_2, 'tab:red')
+    axs[1, 1].plot(x, x**2, 'tab:orange')
+    axs[1, 1].set_title(r'$\sigma_{N}$')
+    
+    for ax in axs.flat:
+      ax.set(xlabel=r'$\alpha$', ylabel='y-label')
+
+# Hide x labels and tick labels for top plots and y ticks for right plots.
+    for ax in axs.flat:
+      ax.label_outer()  
+
+
+def LC():
+  
+  psi.apply_local_op(11,sites[1].Cd-0.95*sites[1].C, unitary=True)
+  psi.apply_local_op(0, D_a)
+  
+  n_i_t=[]
+  n_i=[]
+  x_t=[]
+  for i in range(L):
+    n_i.append(psi.expectation_value('N', i+1))
+  n_i_t.append(n_i)
+  for i in range(int(tmax/dt)):
+     print("time_step:", i)
+     Suz_trot_real(psi, dt, N_steps, H_bond_tebd)
+     n_i=[]
+     for j in range(L):
+       n_i.append(psi.expectation_value('N', j+1))
+     n_i_t.append(n_i)
+     x_t.append(psi.expectation_value(X, [0]))
+
+    
+  plt.figure()
+  plt.imshow(n_i_t[::-1],
+               vmin=None,
+               aspect='auto',
+               interpolation='nearest',
+               extent=(0, L, 0, 2))
+  plt.xlabel('site i')
+  plt.ylabel('time g='+str(g))
+
+  plt.colorbar().set_label('Occupancy $N$')
+
+  np.save(ID+'nit', n_i_t)   
+  np.save(ID+'X(t)', x_t)    
 
 #Define parameters 
 Nmax=8
-L=10
-g= 2
-Omega  = 20
+L=20
+g= 0.25
+Omega  = 10
 J=1   
-alpha=1
-dt=0.01
-tmax=1
+alpha=0
+dt=2/200
+tmax=2
 N_steps=1
 verbose=False
 trunc_param={'chi_max':80,'svd_min': 0.00000000000001, 'verbose': verbose}
 sites = sites(L,Nmax)
 ps= mixed_state(L)
+ID='LC_coherent_L'+str(L)+'_g'+str(g)+'_Omega_'+str(Omega)+'displacement_'+str(alpha)+'dt_'+str(dt)
+
+with open('GS_J_1V_0L_20.pkl', 'rb') as f:
+    psifermion = pickle.load(f)
+
 psi=MPS.from_product_state(sites, ps)
 
-#Generite the lattice and the operator
+for i in range(L):
+     psi.set_B(i+1, psifermion.get_B(i))
+     psi.set_SL(i+1, psifermion.get_SL(i))
+     psi.set_SR(i+1, psifermion.get_SR(i))
+
+
+print(psi)
+#Generate the lattice and the operator
 
 H_bond_tebd=H_Peier(g, J, Omega)[0]
 H_bond=H_Peier(g, J, Omega)[1]
-D_a=displacement_op(alpha)
+D_a=displacement_op(alpha, sites)
 X=psi.sites[0].B+psi.sites[0].Bd
 #Initialize a WF with the fermions in the ground and the bosonic site in the Coherent space 
 
-psi.apply_local_op(0, D_a)
+
 
 #Perform a time evolution and save at every instant the average value of X=B+Bd
-
-
-x_t=[]
-t=np.linspace(0, tmax, int(tmax/dt))
-for i in range(int(tmax/dt)):
-   print("time_step:", i)
-   Suz_trot_real(psi, dt, N_steps, H_bond_tebd)
-   x_t.append(psi.expectation_value(X, [0]))
-   
-plt.plot(t, x_t)
-plt.xlabel('t')
-plt.ylabel('<X(t)>')
-plt.show()
+LC()
+     
 
 
 
 
-
-
-
-
-
-
-
-"""
-n_i_t=[]
-n_i=[]
-for i in range(L):
-    n_i.append(psi.expectation_value('N', i+1))
-n_i_t.append(n_i)
-for i in range(int(tmax/dt)):
-   print("time_step:", i)
-   Suz_trot_real_pert(psi, dt, 1, H_bond_tebd, H_perturbed_ev, H_perturbed_odd)
-   n_i=[]
-   for j in range(L):
-       n_i.append(psi.expectation_value('N', j+1))
-   n_i_t.append(n_i)
-   plt.plot(n_i)
-   plt.show()
     
-plt.figure()
-plt.imshow(n_i_t[::-1],
-               vmin=None,
-               aspect='auto',
-               interpolation='nearest',
-               extent=(0, L, 0, 1))
-plt.xlabel('site i')
-plt.ylabel('time g='+str(g))
+    
 
-plt.colorbar().set_label('Occupancy $N$')
-
-np.save('nit_g'+str(g)+'B_4_single_p'+'Omega_'+str(Omega), n_i_t)
-"""

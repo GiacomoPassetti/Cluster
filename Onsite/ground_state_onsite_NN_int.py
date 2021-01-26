@@ -98,6 +98,9 @@ def Energy(psi, H_bond_ev, H_bond_odd):
         E_bond=np.average(E[1:L+1])
         
         return E_tot, E_bond
+    
+
+    
 
 def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond_tebd_ev,H_bond_tebd_odd, H_bond_ev, H_bond_odd):
  DeltaE=2*max_error_E
@@ -106,10 +109,10 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond_tebd_ev,H_bond_tebd_o
     print("delta_tau =", delta_t[dt])
     U_ev=U_bond(delta_t[dt], H_bond_tebd_ev)
     U_odd= U_bond(delta_t[dt]/2, H_bond_tebd_odd)
-    DeltaE= 2*max_error_E
+    DeltaE= 2*max_error_E[dt]
     step=0
-    while (DeltaE > max_error_E):
-      for T in range(N_steps): 
+    while (DeltaE > max_error_E[dt]):
+      for T in range(N_steps[dt]): 
 
         print("Step:", T)
 
@@ -152,7 +155,7 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond_tebd_ev,H_bond_tebd_o
         psi.compress_svd(trunc_param[dt])
 
 
-      step += N_steps
+      step += N_steps[dt]
       E=Energy(psi, H_bond_ev, H_bond_odd)[1]
       DeltaE=np.abs(E_old-E)
       E_old=E
@@ -160,15 +163,16 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond_tebd_ev,H_bond_tebd_o
       
       print("After", step, "steps, bond_E = ", E, "and DeltaE = ", DeltaE )
 
-Nmax=8
+Nmax=4
 L=10
 g= 0
 Omega  = 1
-J=1   
-h=0.2
+J=1
+h=0
 V=0
-max_error_E=1.e-6
-N_steps=10
+max_error_E=[0.0001, 1.e-5, 1.e-6, 1.e-7, 1.e-8]
+ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
+N_steps=[8, 8, 10, 10, 10]
 sites = sites(L,Nmax)
 ps= product_state(L)
 psi=MPS.from_product_state(sites, ps)
@@ -178,20 +182,34 @@ H_bond_ev=H_Peier(g, J, Omega, h, V)[2]
 H_bond_odd=H_Peier(g, J, Omega, h, V)[3]
 
 delta_t_im=[0.1, 0.01, 0.001, 1.e-4, 1.e-5]
-chis=[40, 50, 50, 80, 100]
+chis=[50, 60, 60, 80, 100]
 verbose=False
 trunc_param=[]
-for i in range(5):
+for i in range(len(chis)):
     trunc_param.append({'chi_max':chis[i],'svd_min': 0.00000000000001, 'verbose': verbose})
     
+N_b=[]
+g_s=[]
+for g in list(np.arange(0,0.05, 0.005)):
+    ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'g_'+str(g)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
+    g_s.append(g)
+    psi=MPS.from_product_state(sites, ps)
+    H_bond_tebd_ev=H_Peier(g, J, Omega, h, V)[0]
+    H_bond_tebd_odd=H_Peier(g, J, Omega, h, V)[1]
+    H_bond_ev=H_Peier(g, J, Omega, h, V)[2]
+    H_bond_odd=H_Peier(g, J, Omega, h, V)[3]
+    Suz_trot_im(psi, delta_t_im, max_error_E, N_steps, H_bond_tebd_ev, H_bond_tebd_odd, H_bond_ev, H_bond_odd)
+    with open(ID+'.pkl', 'wb') as f:
+       pickle.dump(psi, f)
+    N_b.append(psi.expectation_value('N', [0]))
+    print('For g=',g, 'N_b=', N_b)
 
-print(psi.expectation_value('N'))
-Suz_trot_im(psi, delta_t_im, max_error_E, N_steps, H_bond_tebd_ev, H_bond_tebd_odd, H_bond_ev, H_bond_odd)
 
-print(sum(psi.expectation_value('N')))
-plt.plot(psi.expectation_value('N',range(1,L+1)))
+plt.plot(g_s, N_b)
+plt.xlabel('g')
+plt.ylabel('avg Photons')
 plt.show()
 
 
 
-
+np.save('Avg_bos'+ID, N_b)
