@@ -31,7 +31,7 @@ from tenpy.models.fermions_spinless import FermionModel
 from tenpy.algorithms.tebd import Engine
 import pickle
 import copy
-
+import time
 
 
 def sites(L,Nmax):
@@ -200,11 +200,13 @@ def coherent_state(alpha_max, Nmax_1, Nmax_2):
       ax.label_outer()  
 
 
-def LC():
-  
+def LC(psi, tmax):
+  """
   psi.apply_local_op(11,sites[1].Cd-0.95*sites[1].C, unitary=True)
+  """
+  start_time=time.time()
   psi.apply_local_op(0, D_a)
-  
+  eps=0
   n_i_t=[]
   n_i=[]
   x_t=[]
@@ -212,8 +214,8 @@ def LC():
     n_i.append(psi.expectation_value('N', i+1))
   n_i_t.append(n_i)
   for i in range(int(tmax/dt)):
-     print("time_step:", i)
-     Suz_trot_real(psi, dt, N_steps, H_bond_tebd)
+     print("time_step:", i, "Time of evaluation:", time.time()-start_time, "Actual truncation:", eps)
+     eps=eps + Suz_trot_real(psi, dt, N_steps, H_bond_tebd).eps
      n_i=[]
      for j in range(L):
        n_i.append(psi.expectation_value('N', j+1))
@@ -226,7 +228,7 @@ def LC():
                vmin=None,
                aspect='auto',
                interpolation='nearest',
-               extent=(0, L, 0, 2))
+               extent=(0, L, 0, tmax))
   plt.xlabel('site i')
   plt.ylabel('time g='+str(g))
 
@@ -237,13 +239,13 @@ def LC():
 
 #Define parameters 
 Nmax=8
-L=20
+L=100
 g= 0.25
 Omega  = 10
 J=1   
-alpha=0
-dt=2/200
-tmax=2
+alpha=1
+dt=1/100
+tmax=0.4
 N_steps=1
 verbose=False
 trunc_param={'chi_max':80,'svd_min': 0.00000000000001, 'verbose': verbose}
@@ -251,7 +253,7 @@ sites = sites(L,Nmax)
 ps= mixed_state(L)
 ID='LC_coherent_L'+str(L)+'_g'+str(g)+'_Omega_'+str(Omega)+'displacement_'+str(alpha)+'dt_'+str(dt)
 
-with open('GS_J_1V_0L_20.pkl', 'rb') as f:
+with open('GS_J_1V_0L_100DMRG.pkl', 'rb') as f:
     psifermion = pickle.load(f)
 
 psi=MPS.from_product_state(sites, ps)
@@ -274,8 +276,8 @@ X=psi.sites[0].B+psi.sites[0].Bd
 
 
 #Perform a time evolution and save at every instant the average value of X=B+Bd
-LC()
-     
+
+LC(psi, tmax)
 
 
 

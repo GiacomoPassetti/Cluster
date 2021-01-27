@@ -51,18 +51,19 @@ def product_state(L):
     return ps
 J=1
 dt=0.05
-L=20
+L=100
 V=0
 mu=0
 steps=40
 sites=sites(L)
 ps=product_state(L)
 psi=MPS.from_product_state(sites, ps)
+psi2=MPS.from_product_state(sites, ps)
 model_params={'bc_MPS':'finite', 'bc_x':'open', 'explicit_plus_hc':True, 'lattice':'Chain', 'J':J, 'conserve':None, 'V':V, 'mu':mu, 'L':L}
 FC=tenpy.models.fermions_spinless.FermionChain(model_params)
 print(FC.calc_H_bond()[0])
 verbose=True
-trunc_param={'svd_min': 0.00000000001, 'verbose': verbose, 'keys':'sorted'}
+trunc_param={'svd_min': 0.00000000000001, 'verbose': verbose, 'keys':'sorted'}
 options={
             'compression_method': 'SVD',
             'trunc_param': trunc_param,
@@ -75,13 +76,13 @@ tebd_params = {
         'N_steps': 20,
         'max_error_E': 1.e-8,
         'trunc_params': {
-            'chi_max': 100,
+            'chi_max': 120,
             'svd_min': 1.e-10
         },
         'verbose': verbose,
     }
 
-ID='GS_J_'+str(J)+'V_'+str(V)+'L_'+str(20)
+ID='GS_J_'+str(J)+'V_'+str(V)+'L_'+str(L)
 
 """#Generate with IMTE
 eng = Engine(psi, FC, tebd_params)
@@ -91,7 +92,7 @@ dmrg_params = {
         'mixer': True,  # setting this to True is essential for the 1-site algorithm to work.
         'max_E_err': 1.e-10,
         'trunc_params': {
-            'chi_max': 50,
+            'chi_max': 120,
             'svd_min': 1.e-10
         },
         'verbose': verbose,
@@ -100,10 +101,15 @@ dmrg_params = {
     }
 info = dmrg.run(psi, FC, dmrg_params)
 
+
+
+
 plt.plot(psi.expectation_value('N'))
 plt.plot()
 
-with open(ID+'.pkl', 'wb') as f:
+with open(ID+'DMRG.pkl', 'wb') as f:
        pickle.dump(psi, f)
     
-print(psi)
+
+
+    
