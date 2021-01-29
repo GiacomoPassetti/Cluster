@@ -15,27 +15,6 @@ import copy
 
 
 
-
-
-
-
-
-def H_Peier(J, g, Omega):
-    H_peier= Operator_builder([Omega*Nb]+[Idf]*L)[1]
-    
-    
-    
-    
-    for i in range(L-2):
-        hop=[expm(1j*g(B+Bd))]+[Idf]*L
-        hop[i+1]=J*Cd
-        hop[i+2]=C
-        H_peier= H_peier + Operator_builder(hop)[1]
-        print(Operator_builder(hop)[1])
-    H_peier=H_peier+H_peier.conj().T
-    return H_peier
-
-    
   
     
 def vec_builder(List):
@@ -57,46 +36,29 @@ def Operator_builder(List):  # Realizes the tensor dot of the List of operators 
     return Op, Opq
 
 
-    
-        
+       
 class Vector:
   def __init__(self, A):
-    self.vector = A
+    self.v = A
+    self.norm= np.tensordot(self.v.conj().T, self.v, 1)
      
   
   def expectation(self, Op):
-      val=np.tensordot(self.vector.conj().T, np.tensordot(Op, self.vector, 1), 1)
+      val=np.tensordot(self.v.conj().T, np.tensordot(Op, self.v, 1), 1)
       return val      
 
   def apply(self, Op):
-    self.vector=np.tensordot(Op, self.vector, 1)
-    
+    self.v=np.tensordot(Op, self.v, 1)
+  
+  def Nf(self):
+      nf=[]
+      for i in range(L):
+          nf.append(self.expectation(N(i+1)))
+      return nf
+  def Nb(self):
+      return self.expectation(N(0))
 
     
-  def Vector_builder(self, List):
-    v=np.tensordot(List[0], List[1], axes=0)
-    
-    
-    for i in range(L-1):
-       v=np.tensordot(v, List[i+2], axes=0)
-    print(v.shape)
-    v=np.reshape(v, [(Nmax+1)*(2**L)])
-    print(v.shape)
-    self.vector=v
-     
-
-Omega, J, g, Nmax, L = 0,1,0,8,8
-Fock=(Nmax+1)*(2**L)
-C, Cd, Nf, Idf = FermionSite(None, filling=0.5).C.to_ndarray(), FermionSite(None, filling=0.5).Cd.to_ndarray(), FermionSite(None, filling=0.5).N.to_ndarray(), FermionSite(None, filling=0.5).Id.to_ndarray()
-B, Bd, Nb, Idb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).B.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Bd.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).N.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Id.to_ndarray()
-Vac_b=np.zeros((Nmax+1))
-Vac_b[0]=1
-empty=np.array([1,0])
-full=np.array([0,1])
-empty_vector=vec_builder([Vac_b]+[empty]*L)[1].reshape(Fock,1)
-full_vector=vec_builder([Vac_b]+[full]*L)[1].reshape(Fock,1)
-half_filled=Vector(vec_builder([Vac_b]+[empty]*int(L/2)+ [full]*int(L/2))[1].reshape(Fock, 1))
-
 def N(i):
     if i==0:
         ni=Operator_builder([Nb]+[Idf]*L)[1]
@@ -130,8 +92,60 @@ def Peier_open(g,Omega,J):
         kin=kin+ Operator_builder(hop_L)[1]+Operator_builder(hop_R)[1]
     H=kin+cav
     return H
+     
 
-w, v= eigh(Peier_open(g,Omega, J), eigvals_only=False) 
+Omega, J, g, Nmax, L = 5,1,1,4,8
+filling=int(L/2)
+ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
+Fock=(Nmax+1)*(2**L)
+C, Cd, Nf, Idf = FermionSite(None, filling=0.5).C.to_ndarray(), FermionSite(None, filling=0.5).Cd.to_ndarray(), FermionSite(None, filling=0.5).N.to_ndarray(), FermionSite(None, filling=0.5).Id.to_ndarray()
+B, Bd, Nb, Idb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).B.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Bd.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).N.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Id.to_ndarray()
+Vac_b=np.zeros((Nmax+1))
+Vac_b[0]=1
+empty=np.array([1,0])
+full=np.array([0,1])
+empty_vector=vec_builder([Vac_b]+[empty]*L)[1].reshape(Fock,1)
+full_vector=vec_builder([Vac_b]+[full]*L)[1].reshape(Fock,1)
+hf=Vector(vec_builder([Vac_b]+[empty]*int(L/2)+ [full]*int(L/2))[1].reshape(Fock, 1))
+
+
+
+
+
+def plot_ph_av(gmin, gmax, steps, Omega, J):
+    fot_avg=[]
+    err=filling
+    gs=list(np.arange(gmin, gmax, steps))
+    
+    for g in gs:
+        
+        w, v= eigh(Peier_open(g,Omega, J), eigvals_only=False) 
+        vectors=[]
+        oc=0
+        for i in range(Fock):
+            print(i)
+            vectors.append(Vector(v[:, i]))
+            oc=sum(vectors[i].Nf())
+            GS=vectors[i]
+            E_gs=w[i]
+            if abs(oc-filling)<0.00001:
+                break
+            else:
+                continue
+
+        fot_avg.append(GS.Nb())
+    plt.plot(gs, fot_avg)
+    plt.xlabel('g')
+    plt.ylabel(r'$<N_{ph}>$')
+    plt.show
+        
+
+
+plot_ph_av(0, 0.25, 0.005, 1, 1)
+
+    
+
+
 
 
 
