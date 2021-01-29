@@ -201,9 +201,9 @@ def coherent_state(alpha_max, Nmax_1, Nmax_2):
 
 
 def LC(psi, tmax):
-  """
-  psi.apply_local_op(11,sites[1].Cd-0.95*sites[1].C, unitary=True)
-  """
+  
+  psi.apply_local_op(int(L/2),sites[1].Cd-0.95*sites[1].C, unitary=True)
+  
   start_time=time.time()
   psi.apply_local_op(0, D_a)
   eps=0
@@ -239,13 +239,13 @@ def LC(psi, tmax):
 
 #Define parameters 
 Nmax=8
-L=100
-g= 0.25
+L=20
+g= 0
 Omega  = 10
 J=1   
 alpha=1
 dt=1/100
-tmax=0.4
+tmax=2
 N_steps=1
 verbose=False
 trunc_param={'chi_max':80,'svd_min': 0.00000000000001, 'verbose': verbose}
@@ -253,7 +253,7 @@ sites = sites(L,Nmax)
 ps= mixed_state(L)
 ID='LC_coherent_L'+str(L)+'_g'+str(g)+'_Omega_'+str(Omega)+'displacement_'+str(alpha)+'dt_'+str(dt)
 
-with open('GS_J_1V_0L_100DMRG.pkl', 'rb') as f:
+with open('GS_J_1V_0L_20DMRG.pkl', 'rb') as f:
     psifermion = pickle.load(f)
 
 psi=MPS.from_product_state(sites, ps)

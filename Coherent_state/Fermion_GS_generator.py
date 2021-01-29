@@ -51,7 +51,7 @@ def product_state(L):
     return ps
 J=1
 dt=0.05
-L=100
+L=20
 V=0
 mu=0
 steps=40
@@ -90,10 +90,10 @@ eng.run_GS()
 """
 dmrg_params = {
         'mixer': True,  # setting this to True is essential for the 1-site algorithm to work.
-        'max_E_err': 1.e-10,
+        'max_E_err': 1.e-18,
         'trunc_params': {
             'chi_max': 120,
-            'svd_min': 1.e-10
+            'svd_min': 1.e-12
         },
         'verbose': verbose,
         'combine': False,
