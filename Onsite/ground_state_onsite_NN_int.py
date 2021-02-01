@@ -164,15 +164,15 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond_tebd_ev,H_bond_tebd_o
       print("After", step, "steps, bond_E = ", E, "and DeltaE = ", DeltaE )
 
 Nmax=4
-L=10
+L=8
 g= 0
 Omega  = 1
 J=1
 h=0
 V=0
-max_error_E=[0.0001, 1.e-5, 1.e-6, 1.e-7, 1.e-8]
+max_error_E=[0.00001, 1.e-5, 1.e-6, 1.e-7, 1.e-8, 1.e-9]
 ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
-N_steps=[8, 8, 10, 10, 10]
+N_steps=[15, 15, 20, 30, 30, 30]
 sites = sites(L,Nmax)
 ps= product_state(L)
 psi=MPS.from_product_state(sites, ps)
@@ -181,16 +181,17 @@ H_bond_tebd_odd=H_Peier(g, J, Omega, h, V)[1]
 H_bond_ev=H_Peier(g, J, Omega, h, V)[2]
 H_bond_odd=H_Peier(g, J, Omega, h, V)[3]
 
-delta_t_im=[0.1, 0.01, 0.001, 1.e-4, 1.e-5]
-chis=[50, 60, 60, 80, 100]
+delta_t_im=[0.1, 0.01, 0.001, 1.e-4, 1.e-5, 1.e-6]
+chis=[50, 60, 60, 80, 150, 150]
 verbose=False
 trunc_param=[]
 for i in range(len(chis)):
     trunc_param.append({'chi_max':chis[i],'svd_min': 0.00000000000001, 'verbose': verbose})
     
+"""
 N_b=[]
 g_s=[]
-for g in list(np.arange(0,0.05, 0.005)):
+for g in list(np.arange(0,2, 0.2)):
     ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'g_'+str(g)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
     g_s.append(g)
     psi=MPS.from_product_state(sites, ps)
@@ -212,4 +213,8 @@ plt.show()
 
 
 
-np.save('Avg_bos'+ID, N_b)
+np.save('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Data/N_avg_bosEXACT_TEBD'+ID, N_b)
+"""
+
+print(psi.expectation_value('N'))
+

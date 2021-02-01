@@ -14,4 +14,7 @@ from tenpy.networks.site import BosonSite
 import copy
 import Exact_Peierls.py as ep
 
-print(ep.J)
+print(a)
+t=np.linalg(0,10,100)
+plt.plot(t,t,t,t**2,t,t**3)
+plt.show()
