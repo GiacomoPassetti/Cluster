@@ -233,22 +233,22 @@ full=np.array([0,1])
 empty_vector=vec_builder([Vac_b]+[empty]*L)[1].reshape(Fock,1)
 full_vector=vec_builder([Vac_b]+[full]*L)[1].reshape(Fock,1)
 hf=Vector(vec_builder([Vac_b]+[empty]*int(L/2)+ [full]*int(L/2))[1].reshape(Fock, 1))
-print(JW)
 
 
 
 
-def A_t(Omega, J, g, Nmax, L): # Now here i implement a quench local in the fermion sector in order to see how globally affects the Electric field of the cavity
-    ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
+
+def A_t(Omega, J, g, Nmax, L, eta): # Now here i implement a quench local in the fermion sector in order to see how globally affects the Electric field of the cavity
+    ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)+'eta_'+str(eta)
     GS=Ground_state_peier(g, J, Omega)
     A=Operator_builder([B+Bd]+[Idf]*L)[1]
     At=[GS.expectation(A)]
     Uimp=U_dt(Peier_open(g, Omega, J), 0.05)
     Upert=U_dt(Peier_impurity(g, Omega, J, eta), 0.05)
-    t1=np.arange(0.5,5.05,0.05)
-    t2=np.arange(5.05,10.05, 0.05)
-    t=np.arange(0,10.05, 0.05)
-    
+    t1=np.arange(0.05, 2.05, 0.05)
+    t2=np.arange(2.05, 20.05, 0.05)
+    t=np.arange(0,20.05, 0.05)
+    print(len(t1), len(t2))
     for i in list(t1):
        print('Time step:', i)
        GS.apply(Uimp)
@@ -258,13 +258,14 @@ def A_t(Omega, J, g, Nmax, L): # Now here i implement a quench local in the ferm
        GS.apply(Upert)
        At.append(GS.expectation(A))
     
-    np.save('At_'+ID, At)
+    np.save('Long_run_At_'+ID, At)
     plt.plot(t,At)
     plt.xlabel('t')
     plt.ylabel('A(t)')
     plt.show()
 
 
-        
-A_t(Omega, J, g, Nmax, L)
+for Omega in [10]:
+   for g in [0.5, 1, 1.5, 2]:       
+     A_t(Omega, J, g, Nmax, L, eta)
         

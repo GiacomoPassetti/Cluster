@@ -26,18 +26,18 @@ plt.legend(handles=[blue_patch, red_patch] )
 plt.show
 """
 
-o1=np.load('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Ground_state_A_average/A_average_GSOmega_0.1J_1 g_2.0 Nmax_6 L_8.npy')
-o2=np.load('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Ground_state_A_average/A_average_GSOmega_1J_1 g_2.0 Nmax_6 L_8.npy')
-o3=np.load('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Ground_state_A_average/A_average_GSOmega_5J_1 g_2.0 Nmax_6 L_8.npy')
-o4=np.load('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Ground_state_A_average/A_average_GSOmega_10J_1 g_2.0 Nmax_6 L_8.npy')
-o5=np.load('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Ground_state_A_average/A_average_GSOmega_20J_1 g_2.0 Nmax_6 L_8.npy')
+o1=np.load('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Non_locality/Long_run_Omega_10/Long_run_At_Omega_10J_1 g_0.5 Nmax_6 L_8eta_0.2.npy')
+o2=np.load('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Non_locality/Long_run_Omega_10/Long_run_At_Omega_10J_1 g_1 Nmax_6 L_8eta_0.2.npy')
+o3=np.load('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Non_locality/Long_run_Omega_10/Long_run_At_Omega_10J_1 g_1.5 Nmax_6 L_8eta_0.2.npy')
+o4=np.load('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Non_locality/Long_run_Omega_10/Long_run_At_Omega_10J_1 g_2 Nmax_6 L_8eta_0.2.npy')
 
-gs=np.arange(0,2.1,0.1)
 
-plt.plot(gs,o1,gs,o2,gs,o3,gs,o4,gs,o5)
-plt.xlabel(r'$g$')
+gs=np.arange(0,20.05,0.05)
+
+plt.plot(gs,o1,gs,o2,gs,o3,gs,o4)
+plt.xlabel(r'$t$')
 plt.ylabel(r'$<a+a^{\dagger}>_{GS}$')
-red_patch = mpatches.Patch(color='red', label='Exact Diag Wannier stark, h=1, Half filling')
 
-plt.legend([r'$\Omega=0.1$',r'$\Omega=1$',r'$\Omega=5$',r'$\Omega=10$',r'$\Omega=20$'] )
+
+plt.legend([r'$g=0.5$',r'$g=1$',r'$g=1.5$',r'$g=2$'] )
 plt.show
