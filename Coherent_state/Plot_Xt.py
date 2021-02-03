@@ -8,14 +8,9 @@ Created on Mon Jan 25 18:58:32 2021
 import numpy as np
 import matplotlib.pyplot as plt
 
-t=np.linspace(0, 2, 200)
-x_t=np.load('LC_coherent_L20_g0_Omega_10displacement_1dt_0.005X(t)')
-plt.plot(t, x_t)
+X=[np.load()]
+t=np.arange(0,0.5,0.1)
+plt.plot(t,X[0],t,X[1],t,X[2])
 plt.xlabel('t')
-plt.ylabel('<X(t)>')
-
-"""
-plt.text(0,0,r'$\Omega=10$')
-plt.text(0,-0.10,r'$g=0.25$')
-"""
-plt.show()
+plt.ylabel(r'$<X(t)>    \Omega=$'+str(Omega))
+plt.legend(['g=0.25', 'g=0.75', 'g=1.5'])

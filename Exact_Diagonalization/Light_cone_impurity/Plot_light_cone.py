@@ -13,7 +13,7 @@ n_i_t=np.load('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/nit_0-5_Omeg
         
     
 plt.figure()
-plt.imshow(n_i_t[::-1],
+plt.imshow(n_i_t[::-1],'plasma',
                vmin=None,
                aspect='auto',
                interpolation='nearest',

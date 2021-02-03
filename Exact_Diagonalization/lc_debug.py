@@ -41,6 +41,9 @@ class Vector:
   def __init__(self, A):
     self.v = A
     self.norm= np.tensordot(self.v.conj().T, self.v, 1)
+    self.NF=[]
+    for i in range(L):
+        self.NF.append(N(i+1))
      
   
   def expectation(self, Op):
@@ -54,7 +57,7 @@ class Vector:
   def Nf(self):
       nf=[]
       for i in range(L):
-          nf.append(self.expectation(N(i+1)))
+          nf.append(self.expectation(self.NF[i]))
       return nf
   def Nb(self):
       return self.expectation(N(0))
@@ -122,7 +125,22 @@ def Peier_impurity(g,Omega,J):
     H=kin+cav+imp
     return H
 
-
+def Peier_(g,Omega,J):
+    cav=Operator_builder([Omega*Nb]+[Idf]*L)[1]
+    kin=np.zeros((Fock,Fock))
+    for i in range(L-1):
+        hop_R=[Idb]+[Idf]*L
+        hop_L=[Idb]+[Idf]*L
+        
+        hop_R[0]=expm(1j*g*(B+Bd))
+        hop_R[i+1]=-J*Cd
+        hop_R[i+2]=C
+        hop_L[0]=expm(-1j*g*(B+Bd))
+        hop_L[i+1]=-J*C
+        hop_L[i+2]=Cd
+        kin=kin+ Operator_builder(hop_L)[1]+Operator_builder(hop_R)[1]
+    H=kin+cav
+    return H
     
     
 def plot_ph_av(gmin, gmax, steps, Omega, J):
@@ -215,7 +233,7 @@ def light_cone(Omega, J, g, dt, tmax):
     
 
 Omega, J, g, Nmax, L = 10,1,0,6,8
-
+JW=FermionSite(None, filling=0.5).JW.to_ndarray()
 filling=int(L/2)
 ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
 Fock=(Nmax+1)*(2**L)
@@ -229,20 +247,25 @@ full=np.array([0,1])
 empty_vector=vec_builder([Vac_b]+[empty]*L)[1].reshape(Fock,1)
 full_vector=vec_builder([Vac_b]+[full]*L)[1].reshape(Fock,1)
 hf=Vector(vec_builder([Vac_b]+[empty]*int(L/2)+ [full]*int(L/2))[1].reshape(Fock, 1))
+print(JW)
 
 
 
-
-
-pert=Operator_builder([Idb]+[Idf]*int(L/2)+[Cd]+[Idf]*int((L/2)-1))[1]
+"""
+#pert=Operator_builder([Idb]+[Idf]*int(L/2)+[Cd]+[Idf]*int((L/2)-1))[1]
 #light_cone(Omega, J, 0, 0.01, 0.1)
-GS=Ground_state_peier(0, J, Omega)
+#GS=Ground_state_peier(0, J, Omega)
 GS.apply(displacement(1))
-plt.plot(GS.Nf())
-UU=U_dt(Peier_open(1, Omega, J), 0.01)
-for i in range(20):
-    GS.apply(UU)
-    plt.plot(GS.Nf())
-    plt.show()
+n_i_t=[GS.Nf()]
+UU=U_dt(Peier_open(1, Omega, J), 0.05)
+t=list[np.arange(0,5,0.05)]
+print(GS.Nf())
+#for i in range(int(5/0.05)):
+    #print('Time step:', i)
+    #GS.apply(UU)
+    #n_i_t.append(GS.Nf())
+    
+#np.save('nit_0-5_'+ID, n_i_t)
+"""
 
 

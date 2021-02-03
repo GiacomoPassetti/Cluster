@@ -41,7 +41,10 @@ class Vector:
   def __init__(self, A):
     self.v = A
     self.norm= np.tensordot(self.v.conj().T, self.v, 1)
-    NS=[]
+    self.NF=[]
+    for i in range(L):
+        self.NF.append(N(i+1))
+     
   
   def expectation(self, Op):
       val=np.real_if_close(np.tensordot(self.v.conj().T, np.tensordot(Op, self.v, 1), 1))
@@ -54,7 +57,7 @@ class Vector:
   def Nf(self):
       nf=[]
       for i in range(L):
-          nf.append(self.expectation(N(i+1)))
+          nf.append(self.expectation(self.NF[i]))
       return nf
   def Nb(self):
       return self.expectation(N(0))
@@ -102,7 +105,46 @@ def Peier_open(g,Omega,J):
     H=kin+cav
     return H
 
+def Peier_impurity(g,Omega,J):
+    cav=Operator_builder([Omega*Nb]+[Idf]*L)[1]
+    kin=np.zeros((Fock,Fock))
+    for i in range(L-1):
+        hop_R=[Idb]+[Idf]*L
+        hop_L=[Idb]+[Idf]*L
+        
+        hop_R[0]=expm(1j*g*(B+Bd))
+        hop_R[i+1]=-J*Cd
+        hop_R[i+2]=C
+        hop_L[0]=expm(-1j*g*(B+Bd))
+        hop_L[i+1]=-J*C
+        hop_L[i+2]=Cd
+        kin=kin+ Operator_builder(hop_L)[1]+Operator_builder(hop_R)[1]
+    impurity=[Idb]+[Idf]*L
+    impurity[int(L/2)]=0.1*Nf
+    imp=Operator_builder(impurity)[1]
+    H=kin+cav+imp
+    return H
 
+def Peier_periodic(g,Omega,J):
+    cav=Operator_builder([Omega*Nb]+[Idf]*L)[1]
+    kin=np.zeros((Fock,Fock))
+    for i in range(L-1):
+        hop_R=[Idb]+[Idf]*L
+        hop_L=[Idb]+[Idf]*L
+        
+        hop_R[0]=expm(1j*g*(B+Bd))
+        hop_R[i+1]=-J*Cd
+        hop_R[i+2]=C
+        hop_L[0]=expm(-1j*g*(B+Bd))
+        hop_L[i+1]=-J*C
+        hop_L[i+2]=Cd
+        kin=kin+ Operator_builder(hop_L)[1]+Operator_builder(hop_R)[1]
+    hop_R=[expm(1j*g*(B+Bd))]+[C]+[JW]*(L-2)+[-J*Cd]
+    hop_L=[expm(-1j*g*(B+Bd))]+[-J*Cd]+[JW]*(L-2)+[C]
+    kin=kin+ Operator_builder(hop_L)[1]+Operator_builder(hop_R)[1]
+    H=kin+cav
+    return H
+    
     
 def plot_ph_av(gmin, gmax, steps, Omega, J):
     fot_avg=[]
@@ -146,6 +188,30 @@ def Ground_state_peier(g, J, Omega):
                 break
             else:
                 continue
+        ni=GS.Nf()
+        plt.plot(ni)
+        plt.show()
+        
+        return  GS
+    
+def Ground_state_peier_periodic(g, J, Omega):
+        w, v= eigh(Peier_periodic(g,Omega, J), eigvals_only=False) 
+        vectors=[]
+        oc=0
+        for i in range(Fock):
+            
+            vectors.append(Vector(v[:, i]))
+            oc=sum(vectors[i].Nf())
+            GS=vectors[i]
+            E_gs=w[i]
+            if abs(oc-filling)<0.00001:
+                break
+            else:
+                continue
+        ni=GS.Nf()
+        plt.plot(ni)
+        plt.show()
+        
         return  GS
         
     
@@ -161,7 +227,7 @@ def light_cone(Omega, J, g, dt, tmax):
     GS=Ground_state_peier(0, J, Omega) # and the ground state function must have different g values
     print('Diagonalization done for g='+str(g)+' done')
     GS.apply(displacement(1))
-    GS.apply(pert)
+    """GS.apply(pert)"""
     t=list(np.arange(0,tmax, dt))
     n_i_t=[]
     X_t=[]
@@ -172,46 +238,25 @@ def light_cone(Omega, J, g, dt, tmax):
         X_t.append(GS.expectation(A))
         print('Done')
         
-    np.save('Time_occup_Exact_'+ID, n_i_t)
-    np.save('Time_Displ_Exact'+ID, X_t)
-    plt.plot(t, X_t)
-    plt.xlabel('t')
-    plt.ylabel('<X(t)> for g= '+str(g))
+    plt.figure()
+    plt.imshow(n_i_t[::-1],
+               vmin=None,
+               aspect='auto',
+               interpolation='nearest',
+               extent=(0, 8, 0, tmax))
+    plt.xlabel('site i')
+    plt.ylabel('time g='+str(g))
+    plt.colorbar().set_label('Occupancy $N$')
     
     
         
     
-def Oscillator_Dampening(Omega, J, g, dt, tmax):
-    ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
-    A=Operator_builder([B+Bd]+[Idf]*L)[1]
-
-    U=U_dt(Peier_open(g, Omega, J), dt) #Remember that in order to perform the quench the TE operator 
-    GS=Ground_state_peier(0, J, Omega) # and the ground state function must have different g values
-    print('Diagonalization done for g='+str(g)+' done')
-    GS.apply(displacement(1))
-
-    t=list(np.arange(0,tmax, dt))
-
-    X_t=[]
-    for i in t:
-        print('begin time step:', i)
-        GS.apply(U)
-
-        X_t.append(GS.expectation(A))
-        print('Done')
-        
-
-    np.save('Time_Displ_Exact_Damp'+ID, X_t)
-
-    return X_t
-
-                      
+                          
     
     
 
 Omega, J, g, Nmax, L = 10,1,0,6,8
-dt=0.01
-tmax=6
+JW=FermionSite(None, filling=0.5).JW.to_ndarray()
 filling=int(L/2)
 ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
 Fock=(Nmax+1)*(2**L)
@@ -225,18 +270,25 @@ full=np.array([0,1])
 empty_vector=vec_builder([Vac_b]+[empty]*L)[1].reshape(Fock,1)
 full_vector=vec_builder([Vac_b]+[full]*L)[1].reshape(Fock,1)
 hf=Vector(vec_builder([Vac_b]+[empty]*int(L/2)+ [full]*int(L/2))[1].reshape(Fock, 1))
+print(JW)
 
 
 
 
-X=[]
-for gg in [0.25, 0.75, 1.5]:
-    t=np.arange(0,0.5, 0.1)
-    X.append(Oscillator_Dampening(Omega, J, gg, dt, tmax))
-t=np.arange(0,tmax,dt)
-plt.plot(t,X[0],t,X[1],t,X[2])
-plt.xlabel('t')
-plt.ylabel(r'$<X(t)>    \Omega=$'+str(Omega))
-plt.legend(['g=0.25', 'g=0.75', 'g=1.5'])
+#pert=Operator_builder([Idb]+[Idf]*int(L/2)+[Cd]+[Idf]*int((L/2)-1))[1]
+#light_cone(Omega, J, 0, 0.01, 0.1)
+GS=Ground_state_peier_periodic(0, J, Omega)
+GS.apply(displacement(1))
+n_i_t=[GS.Nf()]
+UU=U_dt(Peier_periodic(1, Omega, J), 0.05)
+t=list[np.arange(0,5,0.05)]
+print(GS.Nf())
+for i in range(int(5/0.05)):
+    print('Time step:', i)
+    GS.apply(UU)
+    n_i_t.append(GS.Nf())
     
-    
+np.save('nit_0-5_periodic_'+ID, n_i_t)
+
+
+

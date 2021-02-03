@@ -12,9 +12,10 @@ from scipy.linalg import expm, sinm, cosm, eigh
 from tenpy.networks.site import FermionSite
 from tenpy.networks.site import BosonSite
 import copy
-import Exact_Peierls.py as ep
 
-print(a)
-t=np.linalg(0,10,100)
+
+print(5)
+t=np.arange(0,5, 0.01)
 plt.plot(t,t,t,t**2,t,t**3)
+plt.legend(['t', 'ts', 'tq'])
 plt.show()

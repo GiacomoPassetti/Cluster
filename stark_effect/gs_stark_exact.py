@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Feb  1 10:02:17 2021
+Created on Mon Jan 25 15:28:01 2021
 
 @author: giaco
 """
@@ -41,11 +41,10 @@ class Vector:
   def __init__(self, A):
     self.v = A
     self.norm= np.tensordot(self.v.conj().T, self.v, 1)
-    NS=[]
+     
   
   def expectation(self, Op):
-      val=np.real_if_close(np.tensordot(self.v.conj().T, np.tensordot(Op, self.v, 1), 1))
-      
+      val=np.tensordot(self.v.conj().T, np.tensordot(Op, self.v, 1), 1)
       return val      
 
   def apply(self, Op):
@@ -75,14 +74,6 @@ def Nf_tot():
         Nt=Nt+N(i+1)
     return Nt
     
-def displacement(alpha):
-    l=[expm(alpha*Bd-np.conj(alpha)*B)]+[Idf]*L
-    l=Operator_builder(l)[1]
-    return l
-    
-def U_dt(op, dt):
-    U=expm(-1j*dt*op)
-    return U
 
 
 def Peier_open(g,Omega,J):
@@ -102,7 +93,28 @@ def Peier_open(g,Omega,J):
     H=kin+cav
     return H
 
-
+def stark_open(g,Omega,J, h):
+    cav=Operator_builder([Omega*Nb]+[Idf]*L)[1]
+    kin=np.zeros((Fock,Fock))
+    for i in range(L-1):
+        hop_R=[Idb]+[Idf]*L
+        hop_L=[Idb]+[Idf]*L
+        
+        hop_R[0]=expm(1j*g*(B+Bd))
+        hop_R[i+1]=-J*Cd
+        hop_R[i+2]=C
+        hop_L[0]=expm(-1j*g*(B+Bd))
+        hop_L[i+1]=-J*C
+        hop_L[i+2]=Cd
+        kin=kin+ Operator_builder(hop_L)[1]+Operator_builder(hop_R)[1]
+    stark=np.zeros((Fock, Fock))
+    for i in range(L-1):
+        ons=[Idb]+[Idf]*L
+        ons[i+1]=h*(i+1)*Nf
+        stark=stark+ Operator_builder(ons)[1]
+    
+    H=kin+cav+stark
+    return H
     
 def plot_ph_av(gmin, gmax, steps, Omega, J):
     fot_avg=[]
@@ -137,7 +149,7 @@ def Ground_state_peier(g, J, Omega):
         vectors=[]
         oc=0
         for i in range(Fock):
-            
+            print(i)
             vectors.append(Vector(v[:, i]))
             oc=sum(vectors[i].Nf())
             GS=vectors[i]
@@ -146,72 +158,60 @@ def Ground_state_peier(g, J, Omega):
                 break
             else:
                 continue
-        return  GS
         
     
     
-
-     # This is the function that initializes the fermionic chain in the non-int ground and the Phot
-     # in the coherent state, then evolve the system after a small local perturb and save the instantaneous occ.
-def light_cone(Omega, J, g, dt, tmax):
-    ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
-    A=Operator_builder([B+Bd]+[Idf]*L)[1]
-    pert=Operator_builder([Idb]+[Idf]*int(L/2)+[Cd-0.95*C]+[Idf]*int((L/2)-1))[1]
-    U=U_dt(Peier_open(g, Omega, J), dt) #Remember that in order to perform the quench the TE operator 
-    GS=Ground_state_peier(0, J, Omega) # and the ground state function must have different g values
-    print('Diagonalization done for g='+str(g)+' done')
-    GS.apply(displacement(1))
-    GS.apply(pert)
-    t=list(np.arange(0,tmax, dt))
-    n_i_t=[]
-    X_t=[]
-    for i in t:
-        print('begin time step:', i)
-        GS.apply(U)
-        n_i_t.append(GS.Nf())
-        X_t.append(GS.expectation(A))
-        print('Done')
+def plot_stark(gmin, gmax, steps, Omega, J, h):
+    fot_avg=[]
+    err=filling
+    gs=list(np.arange(gmin, gmax, steps))
+    
+    for g in gs:
         
-    np.save('Time_occup_Exact_'+ID, n_i_t)
-    np.save('Time_Displ_Exact'+ID, X_t)
-    plt.plot(t, X_t)
-    plt.xlabel('t')
-    plt.ylabel('<X(t)> for g= '+str(g))
+        w, v= eigh(stark_open(g,Omega, J, h), eigvals_only=False) 
+        vectors=[]
+        oc=0
+        for i in range(Fock):
+            print(i)
+            vectors.append(Vector(v[:, i]))
+            oc=sum(vectors[i].Nf())
+            GS=vectors[i]
+            E_gs=w[i]
+            if abs(oc-filling)<0.00001:
+                break
+            else:
+                continue
+
+        fot_avg.append(GS.Nb())
+    plt.plot(gs, fot_avg, 'r--')
+    plt.xlabel('g')
+    plt.ylabel(r'$<N_{ph}>$')
+    plt.text(0,0.5, 'Wannier-stark h=1')
+    plt.show
+    np.save('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Data/N_avg_bosEXACT_Stark'+ID, fot_avg)
     
+def plot_stark_for_fun(gmin, gmax, steps, Omega, J, h):
+    fot_avg=[]
+
+    gs=list(np.arange(gmin, gmax, steps))
     
+    for g in gs:
         
-    
-def Oscillator_Dampening(Omega, J, g, dt, tmax):
-    ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
-    A=Operator_builder([B+Bd]+[Idf]*L)[1]
+        w, v= eigh(stark_open(g,Omega, J, h), eigvals_only=False) 
+        GS=Vector(v[:, 0])
+        fot_avg.append(GS.Nb())
+    plt.plot(gs, fot_avg, 'r--')
+    plt.xlabel('g')
+    plt.ylabel(r'$<N_{ph}>$')
 
-    U=U_dt(Peier_open(g, Omega, J), dt) #Remember that in order to perform the quench the TE operator 
-    GS=Ground_state_peier(0, J, Omega) # and the ground state function must have different g values
-    print('Diagonalization done for g='+str(g)+' done')
-    GS.apply(displacement(1))
+    plt.show
+    np.save('N_avg_bosEXACT_Stark'+ID, fot_avg)
 
-    t=list(np.arange(0,tmax, dt))
 
-    X_t=[]
-    for i in t:
-        print('begin time step:', i)
-        GS.apply(U)
-
-        X_t.append(GS.expectation(A))
-        print('Done')
-        
-
-    np.save('Time_Displ_Exact_Damp'+ID, X_t)
-
-    return X_t
-
-                      
     
     
 
-Omega, J, g, Nmax, L = 10,1,0,6,8
-dt=0.01
-tmax=6
+Omega, J, g, Nmax, L = 1,1,1,6,8
 filling=int(L/2)
 ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
 Fock=(Nmax+1)*(2**L)
@@ -219,7 +219,6 @@ C, Cd, Nf, Idf = FermionSite(None, filling=0.5).C.to_ndarray(), FermionSite(None
 B, Bd, Nb, Idb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).B.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Bd.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).N.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Id.to_ndarray()
 Vac_b=np.zeros((Nmax+1))
 Vac_b[0]=1
-
 empty=np.array([1,0])
 full=np.array([0,1])
 empty_vector=vec_builder([Vac_b]+[empty]*L)[1].reshape(Fock,1)
@@ -229,14 +228,22 @@ hf=Vector(vec_builder([Vac_b]+[empty]*int(L/2)+ [full]*int(L/2))[1].reshape(Fock
 
 
 
-X=[]
-for gg in [0.25, 0.75, 1.5]:
-    t=np.arange(0,0.5, 0.1)
-    X.append(Oscillator_Dampening(Omega, J, gg, dt, tmax))
-t=np.arange(0,tmax,dt)
-plt.plot(t,X[0],t,X[1],t,X[2])
-plt.xlabel('t')
-plt.ylabel(r'$<X(t)>    \Omega=$'+str(Omega))
-plt.legend(['g=0.25', 'g=0.75', 'g=1.5'])
-    
-    
+
+
+        
+plot_stark_for_fun(0, 2, 0.05, Omega, J, 1)
+
+
+
+
+
+
+
+
+
+
+
+
+        
+       
+
