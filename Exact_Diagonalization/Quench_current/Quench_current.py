@@ -147,6 +147,51 @@ def Peier_current(g,Omega,J, dV):
     
     H=kin+cav+ons
     return H
+
+def Peier_periodic(g,Omega,J):
+    cav=Operator_builder([Omega*Nb]+[Idf]*L)[1]
+    kin=np.zeros((Fock,Fock))
+    for i in range(L-1):
+        hop_R=[Idb]+[Idf]*L
+        hop_L=[Idb]+[Idf]*L
+        
+        hop_R[0]=expm(1j*g*(B+Bd))
+        hop_R[i+1]=-J*Cd
+        hop_R[i+2]=C
+        hop_L[0]=expm(-1j*g*(B+Bd))
+        hop_L[i+1]=-J*C
+        hop_L[i+2]=Cd
+        kin=kin+ Operator_builder(hop_L)[1]+Operator_builder(hop_R)[1]
+    hop_R=[expm(1j*g*(B+Bd))]+[C]+[JW]*(L-2)+[-J*Cd]
+    hop_L=[expm(-1j*g*(B+Bd))]+[-J*Cd]+[JW]*(L-2)+[C]
+    kin=kin+ Operator_builder(hop_L)[1]+Operator_builder(hop_R)[1]
+    H=kin+cav
+    return H
+
+def Peier_current_periodic(g,Omega,J):
+    cav=Operator_builder([Omega*Nb]+[Idf]*L)[1]
+    kin=np.zeros((Fock,Fock))
+    ons=np.zeros((Fock,Fock))
+    for i in range(L-1):
+        hop_R=[Idb]+[Idf]*L
+        hop_L=[Idb]+[Idf]*L
+        
+        hop_R[0]=expm(1j*g*(B+Bd))
+        hop_R[i+1]=-J*Cd
+        hop_R[i+2]=C
+        hop_L[0]=expm(-1j*g*(B+Bd))
+        hop_L[i+1]=-J*C
+        hop_L[i+2]=Cd
+        kin=kin+ Operator_builder(hop_L)[1]+Operator_builder(hop_R)[1]
+    hop_R=[expm(1j*g*(B+Bd))]+[C]+[JW]*(L-2)+[-J*Cd]
+    hop_L=[expm(-1j*g*(B+Bd))]+[-J*Cd]+[JW]*(L-2)+[C]
+    kin=kin+ Operator_builder(hop_L)[1]+Operator_builder(hop_R)[1]
+    for i in range(L):
+        II=[Idb]+[Idf]*L
+        II[i+1]=(-dV/(L-1)*i+(dV/2))*Nf
+        ons=ons+Operator_builder(II)[1]
+    
+    H=kin+cav+ons
     
     
 def plot_ph_av(gmin, gmax, steps, Omega, J):
@@ -232,43 +277,16 @@ def light_cone(Omega, J, g, dt, tmax):
     plt.colorbar().set_label('Occupancy $N$')
     
     
-        
-    
-                          
-    
-    
-
-Omega, J, g, Nmax, L = 1,1,1,6,8
-eta=0.2
-JW=FermionSite(None, filling=0.5).JW.to_ndarray()
-filling=int(L/2)
-ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
-Fock=(Nmax+1)*(2**L)
-C, Cd, Nf, Idf = FermionSite(None, filling=0.5).C.to_ndarray(), FermionSite(None, filling=0.5).Cd.to_ndarray(), FermionSite(None, filling=0.5).N.to_ndarray(), FermionSite(None, filling=0.5).Id.to_ndarray()
-B, Bd, Nb, Idb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).B.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Bd.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).N.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Id.to_ndarray()
-Vac_b=np.zeros((Nmax+1))
-Vac_b[0]=1
-
-empty=np.array([1,0])
-full=np.array([0,1])
-empty_vector=vec_builder([Vac_b]+[empty]*L)[1].reshape(Fock,1)
-full_vector=vec_builder([Vac_b]+[full]*L)[1].reshape(Fock,1)
-hf=Vector(vec_builder([Vac_b]+[empty]*int(L/2)+ [full]*int(L/2))[1].reshape(Fock, 1))
-
-
-
-
-
-def Quench_current(Omega, J, g, Nmax, L, eta): # Now here i implement a quench local in the fermion sector in order to see how globally affects the Electric field of the cavity
-    ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)+'eta_'+str(eta)
+def Quench_current(Omega, J, g, Nmax, L, dV): # Let's see what happens to the cavity when i try to put a current on the wire
+    ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)+'eta_'+str(eta)+ 'dV_'+str(dV)
     GS=Ground_state_peier(g, J, Omega)
     A=Operator_builder([B+Bd]+[Idf]*L)[1]
     At=[GS.expectation(A)]
     Uimp=U_dt(Peier_open(g, Omega, J), 0.05)
-    Upert=U_dt(Peier_impurity(g, Omega, J, eta), 0.05)
-    t1=np.arange(0.05, 2.05, 0.05)
-    t2=np.arange(2.05, 20.05, 0.05)
-    t=np.arange(0,20.05, 0.05)
+    Upert=U_dt(Peier_current(g,Omega,J, dV), 0.05)
+    t1=np.arange(0.05, 1.05, 0.05)
+    t2=np.arange(1.05, 50.05, 0.05)
+    t=np.arange(0,50.05, 0.05)
     print(len(t1), len(t2))
     for i in list(t1):
        print('Time step:', i)
@@ -279,13 +297,40 @@ def Quench_current(Omega, J, g, Nmax, L, eta): # Now here i implement a quench l
        GS.apply(Upert)
        At.append(GS.expectation(A))
     
-    np.save('Long_run_At_'+ID, At)
+    np.save('Efield_quench_current'+ID, At)
     plt.plot(t,At)
     plt.xlabel('t')
     plt.ylabel('A(t)')
-    plt.show()
+    plt.show()      
+    
+                          
+    
+    
+
+Omega, J, g, Nmax, L = 5,1,1,6,8
+eta=0.2
+JW=FermionSite(None, filling=0.5).JW.to_ndarray()
+filling=int(L/2)
+ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
+Fock=(Nmax+1)*(2**L)
+C, Cd, Nf, Idf = FermionSite(None, filling=0.5).C.to_ndarray(), FermionSite(None, filling=0.5).Cd.to_ndarray(), FermionSite(None, filling=0.5).N.to_ndarray(), FermionSite(None, filling=0.5).Id.to_ndarray()
+B, Bd, Nb, Idb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).B.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Bd.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).N.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Id.to_ndarray()
+Vac_b=np.zeros((Nmax+1))
+Vac_b[0]=1
+dV=5
+empty=np.array([1,0])
+full=np.array([0,1])
+empty_vector=vec_builder([Vac_b]+[empty]*L)[1].reshape(Fock,1)
+full_vector=vec_builder([Vac_b]+[full]*L)[1].reshape(Fock,1)
+hf=Vector(vec_builder([Vac_b]+[empty]*int(L/2)+ [full]*int(L/2))[1].reshape(Fock, 1))
 
 
-  
-A_t(Omega, J, g, Nmax, L, eta)
-        
+
+
+
+
+
+"""
+for g in [0.5, 1, 1.5, 2, 2.5]:
+  Quench_current(Omega, J, g, Nmax, L, dV)
+"""       
