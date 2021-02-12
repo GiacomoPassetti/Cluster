@@ -85,7 +85,7 @@ def Nf_tot():
 
 
 
-def stark_open(g,Omega,J, h):
+def onsite_open(g,Omega,J, h):
     cav=Operator_builder([Omega*Nb]+[Idf]*L)[1]
     kin=np.zeros((Fock,Fock))
     for i in range(L-1):
@@ -102,7 +102,7 @@ def stark_open(g,Omega,J, h):
     stark=np.zeros((Fock, Fock))
     for i in range(L):
         ons=[Idb]+[Idf]*L
-        ons[i+1]=h*(i+1)*Nf
+        ons[i+1]=h*Nf
         stark=stark+ Operator_builder(ons)[1]
     
     H=kin+cav+stark
@@ -112,14 +112,14 @@ def stark_open(g,Omega,J, h):
         
     
     
-def plot_stark(gmin, gmax, steps, Omega, J, h):
+def plot_onsite(gmin, gmax, steps, Omega, J, h):
     fot_avg=[]
     err=filling
     gs=list(np.arange(gmin, gmax, steps))
     nsq=[]
     for g in gs:
         
-        w, v= eigh(stark_open(g,Omega, J, h), eigvals_only=False) 
+        w, v= eigh(onsite_open(g,Omega, J, h), eigvals_only=False) 
         vectors=[]
         oc=0
         for i in range(Fock):
@@ -143,23 +143,7 @@ def plot_stark(gmin, gmax, steps, Omega, J, h):
     np.save('Average_boson_half_filling_stark'+ID, fot_avg)
     np.save('Nsquared_bos_Exact_stark'+ID, nsq)
     
-def plot_stark_absolute_eh(gmin, gmax, steps, Omega, J, h):
-    fot_avg=[]
 
-    gs=list(np.arange(gmin, gmax, steps))
-    
-    for g in gs:
-        print('Checking g='+str(g))
-        w, v= eigh(stark_open(g,Omega, J, h), eigvals_only=False) 
-        GS=Vector(v[:, 0])
-        fot_avg.append(GS.Nb())
-        print('fot avg:'+str(GS.Nb()))
-    plt.plot(gs, fot_avg, 'r--')
-    plt.xlabel('g')
-    plt.ylabel(r'$<N_{ph}>$')
-
-    plt.show
-    np.save('N_avg_bosEXACT_Stark'+ID, fot_avg)
 
 
 
@@ -182,7 +166,7 @@ NNb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).NN.to_ndarray()
 
 
         
-plot_stark(0, 2, 0.05, Omega, J, 1)
+plot_onsite(0, 2.2, 0.2, Omega, J, 1)
 
 
 

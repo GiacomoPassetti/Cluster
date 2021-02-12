@@ -86,7 +86,16 @@ def H_Peier(g, J, Omega):
 
     return H_bond_tebd, H_bond
     
+def H_Peier_imp(g, J, Omega, h):
+    Peier=npc.outer(npc.expm(1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']),npc.outer(-J*psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].C.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
+    Peier_hc=npc.outer(npc.expm(-1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']), npc.outer(-J*psi.sites[1].C.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
+    cav=npc.outer((Omega/((L-1)))*psi.sites[0].N.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
+    ons_l=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(h*psi.sites[1].N.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
+    ons_r=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),h*psi.sites[1].N.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
+    H_ev=Peier+Peier_hc+cav+ons_l  #This is the energetic term that will be used in the TEBD algorithm
+    H_odd=Peier+Peier_hc+cav+ons_r
 
+    return H_ev, H_odd
 
 
 
@@ -103,7 +112,7 @@ def U_bond(dt, H_bond):
 def Suz_trot_real(psi, dt, N_steps, H_bond_tebd):
     trunc_err=tenpy.algorithms.truncation.TruncationError(eps=0.0, ov=1.0)
     U_ev=U_bond(1j*dt, H_bond_tebd)
-    U_odd= U_bond((1j*dt)/2, H_bond_tebd)
+    U_odd= U_bond((1j*dt), H_bond_tebd)
 
     
     for T in range(N_steps):
@@ -124,15 +133,7 @@ def Suz_trot_real(psi, dt, N_steps, H_bond_tebd):
 
         psi.apply_local_op(0, U_ev, unitary=True)
 
-        for i in range(int(L/2)-1): # First Odd sweep
-            
-            trunc_err += psi.swap_sites(2*i, swap_op=None, trunc_par=trunc_param)
-            psi.apply_local_op((2*i)+1 , U_odd, unitary=True)
-            trunc_err += psi.swap_sites(2*i+1, swap_op=None, trunc_par=trunc_param)
-        for i in range(int(L/2)-1):
-            trunc_err += psi.swap_sites(L-3-2*i, swap_op=None, trunc_par=trunc_param)
-            trunc_err += psi.swap_sites(L-4-2*i, swap_op=None, trunc_par=trunc_param)
-         
+
         trunc_err += psi.compress_svd(trunc_param)
         print(psi)
     return trunc_err
@@ -202,8 +203,8 @@ def coherent_state(alpha_max, Nmax_1, Nmax_2):
 
 def LC(psi, tmax):
   
-  psi.apply_local_op(int(L/2),sites[1].Id+ 0.1*sites[1].N, unitary=True)
-  
+
+  U_imp=npc.expm((-1j/(2*dt))*pert*sites[1].N)
   start_time=time.time()
   psi.apply_local_op(0, D_a)
   eps=0
@@ -215,12 +216,15 @@ def LC(psi, tmax):
   n_i_t.append(n_i)
   for i in range(int(tmax/dt)):
      print("time_step:", i, "Time of evaluation:", time.time()-start_time, "Actual truncation:", eps)
+     psi.apply_local_op(int(L/2)+1, U_imp, unitary=True)
      eps=eps + Suz_trot_real(psi, dt, N_steps, H_bond_tebd).eps
+     psi.apply_local_op(int(L/2)+1, U_imp, unitary=True)
      n_i=[]
      for j in range(L):
        n_i.append(psi.expectation_value('N', j+1))
      n_i_t.append(n_i)
      x_t.append(psi.expectation_value(X, [0]))
+     print(psi.expectation_value('N', int(L/2)))
 
     
   plt.figure()
@@ -242,10 +246,11 @@ Nmax=8
 L=20
 g= 0
 Omega  = 10
-J=1   
-alpha=1
+pert=0.05
+J=2   
+alpha=0
 dt=1/50
-tmax=0.2
+tmax=2
 N_steps=1
 verbose=False
 trunc_param={'chi_max':50,'svd_min': 0.00000000000001, 'verbose': verbose}

@@ -166,15 +166,15 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond_tebd_ev,H_bond_tebd_o
       print("After", step, "steps, bond_E = ", E, "and DeltaE = ", DeltaE )
 
 Nmax=8
-L=40
+L=8
 g= 0.5
-Omega  = 5
+Omega  = 1
 J=1
-h=0
+h=1
 V=0
 max_error_E=[0.00001, 1.e-5, 1.e-6, 1.e-7, 1.e-8, 1.e-9]
 ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
-N_steps=[5, 5, 8, 10, 10, 10]
+N_steps=[10, 10, 15, 20, 20, 20]
 sites = sites(L,Nmax)
 ps= product_state(L)
 psi=MPS.from_product_state(sites, ps)
@@ -190,8 +190,9 @@ trunc_param=[]
 for i in range(len(chis)):
     trunc_param.append({'chi_max':chis[i],'svd_min': 0.00000000000001, 'verbose': verbose})
     
-"""
+
 N_b=[]
+NN_b=[]
 g_s=[]
 for g in list(np.arange(0,2, 0.2)):
     ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'g_'+str(g)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
@@ -205,6 +206,7 @@ for g in list(np.arange(0,2, 0.2)):
     with open(ID+'.pkl', 'wb') as f:
        pickle.dump(psi, f)
     N_b.append(psi.expectation_value('N', [0]))
+    NN_b.append(psi.expectation_value('NN', [0]))
     print('For g=',g, 'N_b=', N_b)
 
 
@@ -215,10 +217,12 @@ plt.show()
 
 
 
-np.save('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Data/N_avg_bosEXACT_TEBD'+ID, N_b)
+np.save('N_avg_bos__TEBD'+ID, N_b)
+np.save('N_sq_GS'+ID, NN_b)
+
+
 """
-
-
 Suz_trot_im(psi, delta_t_im, max_error_E, N_steps, H_bond_tebd_ev,H_bond_tebd_odd, H_bond_ev, H_bond_odd)
 with open(ID+'.pkl', 'wb') as f:
        pickle.dump(psi, f)
+"""
