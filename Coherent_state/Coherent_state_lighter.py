@@ -11,24 +11,12 @@ import sys
 import numpy as np
 import numpy.linalg as alg
 import matplotlib.pyplot as plt
-from tenpy import models
-from tenpy.networks.site import SpinSite
 from tenpy.networks.site import FermionSite
 from tenpy.networks.site import BosonSite
-from tenpy.models.model import CouplingModel
-from tenpy.models.model import CouplingMPOModel
-from tenpy.models.spins import SpinModel
-from tenpy.algorithms import dmrg
 from tenpy.networks.mps import MPS
-from tenpy.models.lattice import Lattice
 from tenpy.tools.params import get_parameter
 import tenpy.linalg.np_conserved as npc
-from tenpy.networks.mpo import MPO, MPOEnvironment
-import tenpy.linalg.charges as charges
-from tenpy.models.lattice import Chain
 from scipy.linalg import expm
-from tenpy.models.fermions_spinless import FermionModel
-from tenpy.algorithms.tebd import Engine
 import pickle
 import copy
 import time
@@ -244,7 +232,7 @@ def LC(psi, tmax):
 #Define parameters 
 Nmax=8
 L=20
-g= 0
+g= 1
 Omega  = 10
 pert=0.05
 J=2   

@@ -24,13 +24,8 @@ import copy
     
     
 
-Nmax=400
 
-dt=0.01
-tmax=3
-B, Bd, Nb, Idb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).B.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Bd.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).N.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Id.to_ndarray()
-vac=np.zeros(Nmax+1)
-vac[0]=1
+
 
 
 def cosa(g, T, Omega):
@@ -112,28 +107,35 @@ for T in [-1, -10, -100, -1000]:
      plot_X(0, 2.5, 0.5)
 """
 
-    
+Nmax=400
+dt=0.01
+tmax=3
+B, Bd, Nb, Idb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).B.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Bd.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).N.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Id.to_ndarray()
+vac=np.zeros(Nmax+1)
+vac[0]=1  
 T=-1
-g=2
+g=10
 dt=0.01
 Omega=10
 H=cosm(g*(B+Bd))*T+(Omega*Nb)
 U=expm(-1j*dt*H)
 X=B+Bd
+
 vac=np.zeros(Nmax+1)
 vac[0]=1
 v=copy.deepcopy(vac)
-t=np.arange()
-for i in range(int())
-Xt=[np.tensordot(v.conj().T, np.tensordot(X, v, 1),1)]
-print(Xt)
-v=np.tensordot(U, v, 1)
-Xt=[np.tensordot(v.conj().T, np.tensordot(X, v, 1),1)]
-print(Xt)
 
 
 
-
+gs=np.arange(0,3.01,0.01)
+CS0=[]
+for g in gs:
+    CS=cosm(g*(X))
+    CS0.append(np.real_if_close(np.tensordot(v.conj().T, np.tensordot(CS, v, 1),1)))
+    
+plt.plot(gs,CS0)
+plt.xlabel(r'$g$')
+plt.ylabel(r'$<Cos(A)>_{vac}$')
 
 
 
