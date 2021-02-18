@@ -85,7 +85,7 @@ def Nf_tot():
 
 
 
-def stark_open(g,Omega,J, h):
+def stark_open(g,Omega,J, h, mu):
     cav=Operator_builder([Omega*Nb]+[Idf]*L)[1]
     kin=np.zeros((Fock,Fock))
     for i in range(L-1):
@@ -102,7 +102,7 @@ def stark_open(g,Omega,J, h):
     stark=np.zeros((Fock, Fock))
     for i in range(L):
         ons=[Idb]+[Idf]*L
-        ons[i+1]=h*(i+1)*Nf
+        ons[i+1]=(h*(i+1)+mu)*Nf
         stark=stark+ Operator_builder(ons)[1]
     
     H=kin+cav+stark
@@ -180,8 +180,9 @@ def GS(g, J, Omega):
     
     
 
-Omega, J, g, Nmax, L = 1,1,0,6,6
+Omega, J, g, Nmax, L = 10,1,0,8,8
 h=1
+mu=-20
 filling=int(L/2)
 ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
 Fock=(Nmax+1)*(2**L)
@@ -193,7 +194,15 @@ NNb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).NN.to_ndarray()
 #Lets Find the peak
 
 
+w, v= eigh(stark_open(g,Omega, J, h, mu), eigvals_only=False) 
 
+oc=0
+for i in range(Fock):
+            print('step:', i)
+            GS=Vector(v[:, i])
+            print('Eigenvalue:', w[i])
+            oc=sum(GS.Nf())
+            print(oc)
 
 
 

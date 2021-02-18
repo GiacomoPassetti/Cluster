@@ -83,15 +83,16 @@ def Energy(psi, H_bond, L):
         return E_tot
 
 
-def H_Peier_bond(g, J, Omega, h1, h2, L):
+def H_Peier_bond(g, J, Omega, V, h1, h2, L):
     
     #In order to read quickly the total energy I define both the bond energy for the coupling with the cavity and for only the fermions
     Peier=npc.outer(npc.expm(1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']),npc.outer(-J*psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].C.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
     Peier_hc=npc.outer(npc.expm(-1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']), npc.outer(-J*psi.sites[1].C.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
     cav=npc.outer((Omega/((L-1)))*psi.sites[0].N.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
     ons_l=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(h1*psi.sites[1].N.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
+    rep=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(V*psi.sites[1].N.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].N.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
     ons_r=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),h2*psi.sites[1].N.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
-    H_bond=Peier+Peier_hc+cav+ons_l+ons_r  #This is the energetic term that will be used in the TEBD algorithm
+    H_bond=Peier+Peier_hc+cav+ons_l+ons_r+rep  #This is the energetic term that will be used in the TEBD algorithm
     return  H_bond
 
 def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond):
@@ -140,7 +141,7 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond):
       E=Energy(psi, H_bond, L)
       DeltaE=np.abs(E_old-E)
       E_old=E
-      plt.plot(psi.expectation_value('N', [1,2,3,4,5,6]))
+      plt.plot(psi.expectation_value('N'))
       plt.show()
       
       print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE )
@@ -148,14 +149,14 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond):
 
 
 
-Nmax=8
-L=6
-g= 0
+Nmax=20
+L=22
+g= 2
 Omega  = 0
 J=1
-h=1
-V=0
-max_error_E=[0.00000001, 1.e-6, 1.e-6, 1.e-7, 1.e-8]
+h=0
+V=2
+max_error_E=[1.e-6, 1.e-7, 1.e-7, 1.e-7, 1.e-8]
 ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
 N_steps=[10, 10, 10,10, 10]
 sites = sites(L,Nmax)
@@ -165,15 +166,15 @@ psi=MPS.from_product_state(sites, ps)
 cav=npc.outer((Omega/((L-1)))*psi.sites[0].N.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
 H_bond=[]
 for i in range(L-1):
-    H_bond.append(H_Peier_bond(g, J, Omega, (1+i)*h, (2+i)*h, L))
+    H_bond.append(H_Peier_bond(g, J, Omega,V, h, h, L))
 
 ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'g_'+str(g)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
-delta_t_im=[0.1, 0.1, 0.1, 1.e-4, 1.e-5]
-chis=[80, 80, 80, 80, 80]
+delta_t_im=[0.1, 1.e-2, 1.e-3, 1.e-4, 1.e-5]
+chis=[60, 70, 80, 80, 90]
 verbose=False
 trunc_param=[]
 for i in range(len(chis)):
-    trunc_param.append({'chi_max':chis[i],'svd_min': 1.e-13, 'verbose': verbose})
+    trunc_param.append({'chi_max':chis[i],'svd_min': 1.e-8, 'verbose': verbose})
     
 
 
