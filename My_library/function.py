@@ -64,26 +64,18 @@ def psi(sites,ps):
     psi=MPS.from_product_state(sites, ps)
     return psi
 
-def H_Peier(g, J, Omega,L):
-    Peier=npc.outer(npc.expm(1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']),npc.outer(-J*psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].C.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
-    Peier_hc=npc.outer(npc.expm(-1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']), npc.outer(-J*psi.sites[1].C.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
-    cav=npc.outer((Omega/((L-1)))*psi.sites[0].N.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
-   
-    H_bond_tebd=Peier+Peier_hc+cav  #This is the energetic term that will be used in the TEBD algorithm
-    H_bond=Peier+Peier_hc  
-
-    return H_bond_tebd, H_bond
+def H_Peier_bond(g, J, Omega, h1, h2, L):
     
-def H_Peier_imp(g, J, Omega, h,L):
+    #In order to read quickly the total energy I define both the bond energy for the coupling with the cavity and for only the fermions
     Peier=npc.outer(npc.expm(1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']),npc.outer(-J*psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].C.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
     Peier_hc=npc.outer(npc.expm(-1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']), npc.outer(-J*psi.sites[1].C.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
     cav=npc.outer((Omega/((L-1)))*psi.sites[0].N.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
-    ons_l=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(h*psi.sites[1].N.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
-    ons_r=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),h*psi.sites[1].N.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
-    H_ev=Peier+Peier_hc+cav+ons_l  #This is the energetic term that will be used in the TEBD algorithm
-    H_odd=Peier+Peier_hc+cav+ons_r
+    ons_l=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(h1*psi.sites[1].N.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
+    ons_r=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),h2*psi.sites[1].N.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
+    H_bond=Peier+Peier_hc+cav+ons_l+ons_r  #This is the energetic term that will be used in the TEBD algorithm
+    return  H_bond
+    
 
-    return H_ev, H_odd
 
 
 
@@ -94,64 +86,30 @@ def U_bond(dt, H_bond):
     U=npc.expm(H2).split_legs()
     return U  
 
-def Energy(psi, H_bond, onsite):
+def Energy(psi, H_bond, L):
          
-        E=[psi.expectation_value(Omega*sites[0].N, [0])]
-        E_cav=psi.expectation_value(cav, [0])
-        E_ons=0
-        for i in range(L):
-            E_ons=E_ons+psi.expectation_value(onsite[i], [i+1])
+        E=[]
+
         for i in range(int(L/2)-1): # First Odd sweep
             
             psi.swap_sites(2*i, swap_op=None, trunc_par=trunc_param[1])
-            E.append(psi.expectation_value(H_bond, [2*i+1]))
+            E.append(psi.expectation_value(H_bond[2*i+1], [2*i+1]))
             psi.swap_sites(2*i+1, swap_op=None, trunc_par=trunc_param[1])
 
         for i in range(int(L/2)-1):
             
 
-            E.append(psi.expectation_value(H_bond, [L-2-2*i]))
+            E.append(psi.expectation_value(H_bond[-2*i-1], [L-2-2*i]))
             psi.swap_sites(L-3-2*i, swap_op=None, trunc_par=trunc_param[1])
             psi.swap_sites(L-4-2*i, swap_op=None, trunc_par=trunc_param[1])
 
-        E.append(psi.expectation_value(H_bond, [0]))
-        E_tot=np.sum(E)+E_ons
-        E_bond=np.average(E[1:L+1])
-        
-        return E_tot, E_bond
+        E.append(psi.expectation_value(H_bond[0], [0]))
+        E_tot=np.sum(E)
 
         
-def Suz_trot_real(psi, dt, N_steps, H_bond_tebd):
-    trunc_err=tenpy.algorithms.truncation.TruncationError(eps=0.0, ov=1.0)
-    U_ev=U_bond(1j*dt, H_bond_tebd)
-    U_odd= U_bond((1j*dt), H_bond_tebd)
+        return E_tot
 
-    
-    for T in range(N_steps):
-        print("Step number: ", T)
-
-        for i in range(int(L/2)-1): # First Odd sweep
-            
-            trunc_err += psi.swap_sites(2*i, swap_op=None, trunc_par=trunc_param)
-            psi.apply_local_op((2*i)+1 , U_odd, unitary=True)
-            trunc_err += psi.swap_sites(2*i+1, swap_op=None, trunc_par=trunc_param)
-
-        for i in range(int(L/2)-1):
-           
-
-            psi.apply_local_op(L-2-2*i, U_ev, unitary=True)
-            trunc_err += psi.swap_sites(L-3-2*i, swap_op=None, trunc_par=trunc_param)
-            trunc_err += psi.swap_sites(L-4-2*i, swap_op=None, trunc_par=trunc_param)
-
-        psi.apply_local_op(0, U_ev, unitary=True)
-
-
-        trunc_err += psi.compress_svd(trunc_param)
-        print(psi)
-    return trunc_err
- 
-
-
+        
 def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond_tebd, H_bond, onsite):
  start_time=time.time()
  DeltaE=2*max_error_E
@@ -167,9 +125,8 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond_tebd, H_bond, onsite)
     while (DeltaE > max_error_E[dt]):
     
       for T in range(N_steps[dt]): 
-        print("Step:", T, "Time of evaluation:", time.time()-start_time)
-        apply_ons(psi, U_ons) 
-        print('First done')# Here i evolve of t/2 all the onsite terms 
+
+
         for i in range(int(L/2)-1): # First Odd sweep
 
       
@@ -189,14 +146,17 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond_tebd, H_bond, onsite)
             psi.swap_sites(L-4-2*i, swap_op=None, trunc_par=trunc_param[dt])
 
 
-        psi.apply_local_op(0, U, unitary=True)
-        apply_ons(psi, U_ons)
+        psi.apply_local_op(0, U, unitary=False, renormalize=True)
         psi.compress_svd(trunc_param[dt])
-
+        print(sum(psi.expectation_value('N')))
+      
       step += N_steps[dt]
       E=Energy(psi, H_bond, onsite)[1]
       DeltaE=np.abs(E_old-E)
       E_old=E
+      plt.plot(psi.expectation_value('N', [1,2,3,4,5,6]))
+      plt.show()
+      
       print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE )
 
 
