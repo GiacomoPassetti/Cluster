@@ -112,14 +112,14 @@ def stark_open(g,Omega,J, h, mu):
         
     
     
-def plot_stark(gmin, gmax, steps, Omega, J, h):
+def plot_stark(gmin, gmax, steps, Omega, J, h, mu):
     fot_avg=[]
     err=filling
     gs=list(np.arange(gmin, gmax, steps))
     nsq=[]
     for g in gs:
         
-        w, v= eigh(stark_open(g,Omega, J, h), eigvals_only=False) 
+        w, v= eigh(stark_open(g,Omega, J, h, mu), eigvals_only=False) 
         vectors=[]
         oc=0
         for i in range(Fock):
@@ -135,11 +135,8 @@ def plot_stark(gmin, gmax, steps, Omega, J, h):
         fot_avg.append(GS.Nb())
         nsq.append(GS.NNb())
         print('for g='+str(g)+'Ph avg is '+ str(GS.Nb()))
-    plt.plot(gs, nsq, 'r--')
-    plt.xlabel('g')
-    plt.ylabel(r'$<N_{ph}>$')
 
-    plt.show
+
     np.save('Average_boson_half_filling_stark'+ID, fot_avg)
     np.save('Nsquared_bos_Exact_stark'+ID, nsq)
     
@@ -180,9 +177,9 @@ def GS(g, J, Omega):
     
     
 
-Omega, J, g, Nmax, L = 10,1,0,8,8
+Omega, J, g, Nmax, L = 0.5,1,0,8,8
 h=1
-mu=-20
+mu=0
 filling=int(L/2)
 ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
 Fock=(Nmax+1)*(2**L)
@@ -192,19 +189,10 @@ NNb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).NN.to_ndarray()
 
 
 #Lets Find the peak
-
-
-w, v= eigh(stark_open(g,Omega, J, h, mu), eigvals_only=False) 
-
-oc=0
-for i in range(Fock):
-            print('step:', i)
-            GS=Vector(v[:, i])
-            print('Eigenvalue:', w[i])
-            oc=sum(GS.Nf())
-            print(oc)
-
-
+for L in [6, 8]:
+  Fock=(Nmax+1)*(2**L)
+  ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
+  plot_stark(0, 4, 0.2, Omega, J, h, mu)
 
 
 

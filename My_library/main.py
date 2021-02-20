@@ -152,7 +152,7 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond):
 Nmax=20
 L=22
 g= 2
-Omega  = 0
+Omega  = 5
 J=1
 h=0
 V=2

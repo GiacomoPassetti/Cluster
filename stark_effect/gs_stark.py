@@ -183,7 +183,7 @@ def Many_gs():
  N_b=[]
  NN_b=[]
  g_s=[]
- for g in list(np.arange(0,2, 0.2)):
+ for g in list(np.arange(0,4, 0.2)):
     ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'g_'+str(g)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
     g_s.append(g)
     psi=MPS.from_product_state(sites, ps)
@@ -231,6 +231,3 @@ for i in range(len(chis)):
     
 
 
-
-
-Many_gs()

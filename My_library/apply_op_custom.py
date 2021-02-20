@@ -15,6 +15,7 @@ from tenpy.networks.site import FermionSite
 from tenpy.networks.site import BosonSite
 from tenpy.networks.mps import MPS
 from tenpy.tools.params import get_parameter
+from tenpy.algorithms.truncation import truncate, svd_theta
 import tenpy.linalg.np_conserved as npc
 from scipy.linalg import expm
 import pickle
@@ -63,14 +64,55 @@ def U_bond(dt, H_bond):
     U=npc.expm(H2).split_legs()
     return U
 
+def from_full_custom(
+                  siti,
+                  theta,
+                  trunc_par,
+                  outer_S,
+                  cutoff=1.e-16,
+                  form=None,
+                  normalize=True,
+                  ):
 
+        
+        L = len(siti)
+
+        B_list = [None] * L
+        S_list = [None] * (L + 1)
+        norm = 1. 
+        
+        labels = ['vL'] + ['p' + str(i) for i in range(L)] + ['vR']
+        theta.itranspose(labels)
+        # combine legs from left
+        for i in range(0, L - 1):
+            theta = theta.combine_legs([0, 1])  # combines the legs until `i`
+        # now psi has only three legs: ``'(((vL.p0).p1)...p{L-2})', 'p{L-1}', 'vR'``
+        for i in range(L - 1, 0, -1):
+            # split off B[i]
+            theta = theta.combine_legs([labels[i + 1], 'vR'])
+            theta, S, B, err, renorm = svd_theta(theta, trunc_par, qtotal_LR=[None, None], inner_labels=['vR', 'vL'])
+            
+            
+            if i > 1:
+                theta.iscale_axis(S, 1)
+            B_list[i] = B.split_legs(1).replace_label(labels[i + 1], 'p')
+            S_list[i] = S
+            theta = theta.split_legs(0)
+        # psi is now the first `B` in 'A' form
+        B_list[0] = theta.replace_label(labels[1], 'p')
+        B_form = ['A'] + ['B'] * (L - 1)
+        S_list[0], S_list[-1] = outer_S
+        res = MPS(siti, B_list, S_list, bc='segment', form=B_form, norm=norm)
+        if form is not None:
+            res.convert_form(form)
+        return res
 
 Nmax=20
-L=100
-g= 0.5
-Omega  = 1
+L=30
+g= 0
+Omega  = 10
 J=1
-h=1
+h=0
 V=0
 ps= product_state(L)
 sites = sites(L,Nmax)
@@ -78,9 +120,9 @@ psi=MPS.from_product_state(sites, ps)
 max_error_E=[0.00001, 1.e-5, 1.e-6, 1.e-7, 1.e-8, 1.e-9]
 ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
 N_steps=[10, 10, 15, 20, 20, 20]
-tup={'chi_max':120,'svd_min': 0.00000000000000001, 'verbose': False}
+trunc_param={'chi_max':120,'svd_min': 1.e-13, 'verbose': False}
 H_bond_tebd=H_Peier(g, J, Omega, V)[0]
-U=U_bond(-0.1*1j, H_bond_tebd)
+U=U_bond(-0.1, H_bond_tebd)
 
 
 def apply_local_cav_r(psi, i, op):
@@ -94,9 +136,7 @@ def apply_local_cav_r(psi, i, op):
             p = psi._get_p_labels(n, False)
             pstar = psi._get_p_labels(n, True)
             th = psi.get_theta(i, n)
-            print('prima :', npc.norm(th))
             th = npc.tensordot(op, th, axes=[pstar, p])
-            print('dopo :', npc.norm(th))
             
             "2-- Permutazione di indici che realizza lo swap"
             
@@ -105,8 +145,7 @@ def apply_local_cav_r(psi, i, op):
             
             
             "3-- Scomposizione in A S B B e ridefinizione di psi"
-            split_th = psi.from_full(psi.sites[i:i + n], th, None,cutoff, False, 'segment',
-                                      (psi.get_SL(i), psi.get_SR(i + n - 1)))
+            split_th = from_full_custom(psi.sites[i:i + n], th, trunc_param,outer_S= (psi.get_SL(i), psi.get_SR(i + n - 1)))
             for j in range(n):
                 psi.set_B(i + j, split_th._B[j], split_th.form[j])
             for j in range(n - 1):
@@ -131,8 +170,7 @@ def apply_local_cav_end(psi, i, op):
             
 
             "3-- Scomposizione in A S B B e ridefinizione di psi"
-            split_th = psi.from_full(psi.sites[i:i + n], th, None,cutoff, False, 'segment',
-                                      (psi.get_SL(i), psi.get_SR(i + n - 1)))
+            split_th = from_full_custom(psi.sites[i:i + n], th, trunc_param,outer_S= (psi.get_SL(i), psi.get_SR(i + n - 1)))
             for j in range(n):
                 psi.set_B(i + j, split_th._B[j], split_th.form[j])
             for j in range(n - 1):
@@ -160,8 +198,7 @@ def apply_local_cav_l(psi, i, op):
             
             
             "3-- Scomposizione in A S B B e ridefinizione di psi"
-            split_th = psi.from_full(psi.sites[i:i + n], th, None,cutoff, False, 'segment',
-                                      (psi.get_SL(i), psi.get_SR(i + n - 1)))
+            split_th = from_full_custom(psi.sites[i:i + n], th, trunc_param,outer_S= (psi.get_SL(i), psi.get_SR(i + n - 1)))
             for j in range(n):
                 psi.set_B(i + j, split_th._B[j], split_th.form[j])
             for j in range(n - 1):
@@ -171,22 +208,23 @@ def apply_local_cav_l(psi, i, op):
             psi.sites[psi._to_valid_index(i + 1)] = siteL
             
 
-            # use MPS.from_full to split the sites
-            th = th.combine_legs([('vL', 'p0'), ('vR', 'p1')], qconj=[+1, -1])
 
 
 
 st=time.time()
 def full_sweep(step):
   for _ in range(20):
-   for i in range(L-2):
+   for i in range(L-1):
      print(i)
      apply_local_cav_r(psi, i, U)   
    apply_local_cav_end(psi, L-2, U)
    for i in range(L-2):
     print(i)
     apply_local_cav_l(psi, L-2-i, U)
-  print(psi)
+   plt.plot(psi.expectation_value('N', list(np.arange(1,L+1))))
+   plt.show()
+    
+  
 full_sweep(40)
 print(time.time()-st)
 
