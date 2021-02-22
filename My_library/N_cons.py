@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Feb 18 14:28:05 2021
+Created on Sun Feb 21 20:09:40 2021
 
 @author: giaco
 """
-
+import sys
+sys.path.append('C:/Users/giaco/Desktop/Cluster/My_library')
+import apply_op_custom as op
 import tenpy
 import copy
 import sys
@@ -15,6 +17,7 @@ from tenpy.networks.site import FermionSite
 from tenpy.networks.site import BosonSite
 from tenpy.networks.mps import MPS
 from tenpy.tools.params import get_parameter
+from tenpy.linalg.charges import LegCharge, ChargeInfo
 from tenpy.algorithms.truncation import truncate, svd_theta
 import tenpy.linalg.np_conserved as npc
 from scipy.linalg import expm
@@ -23,8 +26,12 @@ import matplotlib.pyplot as plt
 import time
 
 def sites(L,Nmax):
- FSite=FermionSite(None, filling=0.5)
- BSite=BosonSite(Nmax=Nmax,conserve=None, filling=0 )
+ FSite=FermionSite('N', filling=0.5)
+ qflat=[[0]]*(Nmax+1)
+ ch=ChargeInfo([1], names=None)
+ leg = LegCharge.from_qflat(ch, qflat, qconj=1)
+ BSite=BosonSite(Nmax=Nmax,conserve='parity', filling=0 )
+ BSite.change_charge(leg)
  sites=[]
  sites.append(BSite)
  for i in range(L):
@@ -110,13 +117,14 @@ def from_full_custom(
             res.convert_form(form)
         return res
 
-Nmax=20
-L=20
-g= 0
+
+Nmax=10
+L=100
+g= 1
 Omega  = 10
 J=1
 h=0
-V=2
+V=0
 ps= product_state(L)
 sites = sites(L,Nmax)
 psi=MPS.from_product_state(sites, ps)
@@ -124,10 +132,10 @@ max_error_E=[0.00001, 1.e-5, 1.e-6, 1.e-7, 1.e-8, 1.e-9]
 ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
 N_steps=[10, 10, 15, 20, 20, 20]
 delta_t_im=[0.1, 1.e-2, 1.e-3, 1.e-4, 1.e-5]
-trunc_param={'chi_max':120,'svd_min': 1.e-13, 'verbose': False}
+trunc_param={'chi_max':150,'svd_min': 1.e-13, 'verbose': False}
 H_bond=[]
 for i in range(L-1):
-   H_bond.append(H_Peier_bond(g, J, Omega,V, h, h, L))
+   H_bond.append(H_Peier_bond(g, J, Omega,V, (2*i+1)*h, (2*i+2)*h, L))
 
 Id=npc.outer(psi.sites[0].Id.replace_labels(['p', 'p*'], ['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
 
@@ -252,8 +260,7 @@ def full_sweep(psi, step, U):
     
     apply_local_cav_l(psi, L-2-2*i, U[-2-2*i])
     apply_local_cav_l(psi, L-3-2*i, Id)
-   plt.plot(psi.expectation_value('N', list(np.arange(1,L+1))))
-   plt.show()
+
     
 def GS_search(psi, H_bond, L):
     for dt in [0.1,1.e-2,1.e-3,1.e-4, 1.e-5]:
@@ -291,8 +298,18 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond):
       
       print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
       
-     
-        
-     
-        
-#Suz_trot_im(psi, delta_t_im, max_error_E, N_steps, H_bond)
+      
+def Real_time_ev(psi, dt, max_error_E, tmax, H_bond):
+    U=[]
+    for i in range(L-1):
+        U.append(U_bond(1j*dt, H_bond[i]))
+    full_sweep(psi, int(tmax/dt), U)
+
+
+
+
+st=time.time()
+
+Real_time_ev(psi, 0.005, max_error_E, 0.05, H_bond)
+
+print("time test:", time.time()-st)
