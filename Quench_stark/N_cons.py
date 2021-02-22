@@ -294,6 +294,8 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
       E=Energy(psi, H_bond, L, trunc_param)
       DeltaE=np.abs(E_old-E)
       E_old=E
+      if step > 1200:
+          break
 
       
       print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
