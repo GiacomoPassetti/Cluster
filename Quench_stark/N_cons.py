@@ -5,7 +5,7 @@ Created on Sun Feb 21 20:09:40 2021
 @author: giaco
 """
 import sys
-sys.path.append('C:/Users/giaco/Desktop/Cluster/My_library')
+sys.path.append('C:/Users/giaco/Desktop/Cluster/Quench_stark')
 import apply_op_custom as op
 import tenpy
 import copy
@@ -38,6 +38,8 @@ def sites(L,Nmax):
      sites.append(FSite)
  return sites
 
+
+
 def product_state(L):
     ps=['vac']
     for i in range(int(L/2)):
@@ -53,7 +55,7 @@ def mixed_state(L):
         ps.append(ms)
     return ps
 
-def H_Peier_bond(g, J, Omega, V, h1, h2, L):
+def H_Peier_bond(psi, g, J, Omega, V, h1, h2, L):
     
     #In order to read quickly the total energy I define both the bond energy for the coupling with the cavity and for only the fermions
     Peier=npc.outer(npc.expm(1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']),npc.outer(-J*psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].C.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
@@ -117,33 +119,20 @@ def from_full_custom(
             res.convert_form(form)
         return res, err
 
+
+
+
 def ansatz_wf(Nmax, L):
     ps= product_state(L)
     site= sites(L,Nmax)
-    psi=MPS.from_product_state(sites, ps)
+    psi=MPS.from_product_state(site, ps)
     return psi
 
 
-Nmax=10
-L=30
-g_0=2
-g=g_0/np.sqrt(L)
-Omega  = 10
-J=1
-h=0
-V=0
 
-psi=ansatz_wf(Nmax, L)
-max_error_E=[0.00001, 1.e-5, 1.e-6, 1.e-7, 1.e-8, 1.e-9]
-ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)
-N_steps=[15, 15, 15, 20, 20, 20]
-delta_t_im=[0.1, 1.e-2, 1.e-3, 1.e-4, 1.e-5]
-trunc_param={'chi_max':120,'svd_min': 1.e-13, 'verbose': False}
-H_bond=[]
-for i in range(L-1):
-   H_bond.append(H_Peier_bond(g, J, Omega,V, (2*i+1)*h, (2*i+2)*h, L))
 
-Id=npc.outer(psi.sites[0].Id.replace_labels(['p', 'p*'], ['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
+
+
 
 def apply_local_cav_r(psi, i, op, trunc_param):
             
@@ -260,9 +249,12 @@ def Energy(psi, H_bond, L, trunc_param):
 
 
 
-def full_sweep(psi, step, U, trunc_param):
+def full_sweep(psi, step, U, Id, trunc_param, L):
   eps=TruncationError()
+
   for _ in range(step):
+      
+
    for i in range((L-2)//2):
      
      eps += apply_local_cav_r(psi, 2*i, U[2*i], trunc_param) 
@@ -278,10 +270,10 @@ def full_sweep(psi, step, U, trunc_param):
     
 
 
-def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param):
+def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
  start_time=time.time()
  DeltaE=2*max_error_E
- E_old=Energy(psi, H_bond, L)
+ E_old=Energy(psi, H_bond, L, trunc_param)
  for dt in range(len(delta_t)):
     print("delta_tau =", delta_t[dt], "Time of evaluation:", time.time()-start_time)
 
@@ -293,17 +285,16 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param):
     while (DeltaE > max_error_E[dt]):
     
       
-      full_sweep(psi, N_steps[dt], U, trunc_param)
+      full_sweep(psi, N_steps[dt], U, Id, trunc_param, L)
 
-      print(sum(psi.expectation_value('N')))
+      
         
 
       step += N_steps[dt]
-      E=Energy(psi, H_bond, L)
+      E=Energy(psi, H_bond, L, trunc_param)
       DeltaE=np.abs(E_old-E)
       E_old=E
-      plt.plot(psi.expectation_value('N'))
-      plt.show()
+
       
       print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
       
