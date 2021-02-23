@@ -47,6 +47,30 @@ def product_state(L):
         ps.append('full')
     return ps
 
+def last_site(L):
+    ps=['vac']
+    for i in range(int(L-1)):
+        ps.append('empty')
+    ps.append('full')
+    return ps
+
+def first_site(L):
+    ps=['vac']
+    ps.append('full')
+    for i in range(int(L-2)):
+        ps.append('empty')
+    
+    ps.append('full')
+    return ps
+def left(L):
+    ps=['vac']
+    
+    for i in range(int(L/2)):
+        ps.append('full')
+    for i in range(int(L/2)):
+        ps.append('empty')
+
+    return ps
 def mixed_state(L):
     ps=['vac']
     ms = np.array([1/np.sqrt(2), 1/np.sqrt(2)])
@@ -128,11 +152,23 @@ def ansatz_wf(Nmax, L):
     psi=MPS.from_product_state(site, ps)
     return psi
 
+def ansatz_last(Nmax, L):
+    ps=last_site(L)
+    site= sites(L,Nmax)
+    psi=MPS.from_product_state(site, ps)
+    return psi
 
+def ansatz_first(Nmax, L):
+    ps=first_site(L)
+    site= sites(L,Nmax)
+    psi=MPS.from_product_state(site, ps)
+    return psi
 
-
-
-
+def ansatz_left(Nmax, L):
+    ps=left(L)
+    site= sites(L,Nmax)
+    psi=MPS.from_product_state(site, ps)
+    return psi
 
 def apply_local_cav_r(psi, i, op, trunc_param):
             
