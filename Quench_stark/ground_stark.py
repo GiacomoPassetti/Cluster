@@ -12,17 +12,17 @@ import tenpy.linalg.np_conserved as npc
 import pickle
 
 
-Nmax=20
-L=40
-g_0=2
+Nmax=10
+L=4
+g_0=0
 g=g_0/np.sqrt(L)
 Omega  = 10
 J=1
-h=0
+h=0.1
 V=0
-max_error_E=[1.e-8, 1.e-8, 1.e-8, 1.e-8, 1.e-8, 1.e-8]
+max_error_E=[1.e-12, 1.e-11, 1.e-10, 1.e-9, 1.e-8, 1.e-8]
 ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)+'g_0'+str(g_0)
-N_steps=[20, 20, 20, 20, 20, 20]
+N_steps=[10, 10, 10, 10, 10, 10]
 delta_t_im=[0.1, 1.e-2, 1.e-3, 1.e-4, 1.e-5]
 trunc_param={'chi_max':120,'svd_min': 1.e-13, 'verbose': False}
 psi=ansatz_wf(Nmax, L)

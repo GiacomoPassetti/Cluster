@@ -6,7 +6,7 @@ Created on Sun Feb 21 20:09:40 2021
 """
 import sys
 sys.path.append('C:/Users/giaco/Desktop/Cluster/Quench_stark')
-import apply_op_custom as op
+
 import tenpy
 import copy
 import sys
