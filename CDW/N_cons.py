@@ -6,6 +6,10 @@ Created on Sun Feb 21 20:09:40 2021
 """
 import sys
 sys.path.append('C:/Users/giaco/Desktop/Cluster/My_library')
+
+
+
+
 import tenpy
 import copy
 import sys
@@ -21,7 +25,7 @@ from tenpy.algorithms.truncation import truncate, svd_theta, TruncationError
 import tenpy.linalg.np_conserved as npc
 from scipy.linalg import expm
 import pickle
-import matplotlib.pyplot as plt
+
 import time
 
 def sites(L,Nmax):
@@ -29,7 +33,7 @@ def sites(L,Nmax):
  qflat=[[0]]*(Nmax+1)
  ch=ChargeInfo([1], names=None)
  leg = LegCharge.from_qflat(ch, qflat, qconj=1)
- BSite=BosonSite(Nmax=Nmax,conserve='parity', filling=0 )
+ BSite=BosonSite(Nmax=Nmax,conserve=None, filling=0 )
  BSite.change_charge(leg)
  sites=[]
  sites.append(BSite)
