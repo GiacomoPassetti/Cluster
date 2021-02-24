@@ -5,11 +5,7 @@ Created on Sun Feb 21 20:09:40 2021
 @author: giaco
 """
 import sys
-sys.path.append('C:/Users/giaco/Desktop/Cluster/My_library')
-
-
-
-
+sys.path.append('C:/Users/giaco/Desktop/Cluster/Coherent_state')
 import tenpy
 import copy
 import sys
@@ -25,7 +21,7 @@ from tenpy.algorithms.truncation import truncate, svd_theta, TruncationError
 import tenpy.linalg.np_conserved as npc
 from scipy.linalg import expm
 import pickle
-
+import matplotlib.pyplot as plt
 import time
 
 def sites(L,Nmax):
@@ -65,6 +61,17 @@ def first_site(L):
     
     ps.append('full')
     return ps
+
+def single(L, i):
+    ps=['vac']
+    
+    for _ in range(int(L)):
+        ps.append('empty')
+    
+    ps[i]='full'
+    return ps
+
+
 def left(L):
     ps=['vac']
     
@@ -306,6 +313,35 @@ def full_sweep(psi, step, U, Id, trunc_param, L):
     eps += apply_local_cav_l(psi, L-3-2*i, Id, trunc_param)
   return eps
 
+def full_sweep_second(psi, step, U, Id, trunc_param, L):
+  eps=TruncationError()
+
+  for _ in range(step):
+      
+
+   for i in range((L-2)//2):
+     
+     eps += apply_local_cav_r(psi, 2*i, U[2*i], trunc_param) 
+     eps += apply_local_cav_r(psi, 2*i+1, Id, trunc_param)  
+   
+   eps += apply_local_cav_end(psi, L-2, U[L-2], trunc_param)
+   for i in range((L-2)//2):
+    
+    eps += apply_local_cav_l(psi, L-2-2*i, U[-2-2*i], trunc_param)
+    eps += apply_local_cav_l(psi, L-3-2*i, Id, trunc_param)
+   for i in range((L-2)//2):
+     
+     eps += apply_local_cav_r(psi, 2*i, U[2*i], trunc_param) 
+     eps += apply_local_cav_r(psi, 2*i+1, Id, trunc_param)  
+   
+   eps += apply_local_cav_end(psi, L-2, U[L-2], trunc_param)
+   for i in range((L-2)//2):
+    
+    eps += apply_local_cav_l(psi, L-2-2*i, Id, trunc_param)
+    eps += apply_local_cav_l(psi, L-3-2*i, Id, trunc_param)
+  return eps
+
+
     
 
 
@@ -338,98 +374,3 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
 
       
       print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
-
-
-
-def Iterative_g(psi_f, g1, g2, step, L, Omega, J, h, V, Nmax):
-    print(psi_f)
-    siti = sites(L,Nmax)
-    ps= product_state(L)
-    N_steps=[10, 10, 10, 10, 10, 10]
-    delta_t_im=[0.1, 1.e-2, 1.e-3, 1.e-4, 1.e-5]
-    trunc_param={'chi_max':120,'svd_min': 1.e-13, 'verbose': False}
-    max_error_E=[1.e-8, 1.e-7, 1.e-6, 1.e-6, 1.e-6, 1.e-6]
-    gs=np.arange(g1,g2+step, step)
-    
-    # Produce the first psi for g very small
-    
-    ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)+'g_0'+str(0.1)
-    g=0.5/np.sqrt(L)
-    psi=MPS.from_product_state(siti, ps)
-    for i in range(L):
-          psi.set_B(i+1, psi_f.get_B(i))
-          psi.set_SL(i+1, psi_f.get_SL(i))
-          psi.set_SR(i+1, psi_f.get_SR(i))
-          
-          
-    
-    Id=ons_r=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
-    H_bond=[]
-    for i in range(L-1):
-          H_bond.append(H_Peier_bond(psi, g, J, Omega,V, (2*i+1)*h, (2*i+2)*h, L))
-   
-    Suz_trot_im(psi, delta_t_im, max_error_E, N_steps, H_bond, trunc_param, L, Id)
-    with open(ID+'imTEBD.pkl', 'wb') as f:
-          pickle.dump(psi, f)
-          
-          # Then iterate starting from the Ansatz generated
-          
-    N_steps=[ 10]
-    delta_t_im=[ 1.e-5]
-    trunc_param={'chi_max':120,'svd_min': 1.e-13, 'verbose': False}
-    max_error_E=[ 1.e-6]
-    for g0 in gs:
-        ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)+'g_0'+str(g0)
-        g=g0/np.sqrt(L)
-        H_bond=[]
-        for i in range(L-1):
-          H_bond.append(H_Peier_bond(psi, g, J, Omega,V, (2*i+1)*h, (2*i+2)*h, L))
-        Suz_trot_im(psi, delta_t_im, max_error_E, N_steps, H_bond, trunc_param, L, Id)
-        with open(ID+'imTEBD.pkl', 'wb') as f:
-          pickle.dump(psi, f)
-
-
-def Iterative_g_from_load(psi, g1, g2, step, L, Omega, J, h, V, Nmax):
-    
-    siti = sites(L,Nmax)
-    ps= product_state(L)
-    N_steps=[10, 10, 10, 10, 10, 10]
-    delta_t_im=[0.1, 1.e-2, 1.e-3, 1.e-4, 1.e-5]
-    trunc_param={'chi_max':120,'svd_min': 1.e-13, 'verbose': False}
-    max_error_E=[1.e-8, 1.e-7, 1.e-6, 1.e-6, 1.e-6, 1.e-6]
-    gs=np.arange(g1,g2+step, step)
-    
-    # Produce the first psi for g very small
-    
-    ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)+'g_0'+str(0.1)
-    g=0.1/np.sqrt(L)
-    
-    
-    Id=ons_r=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
-    """
-    H_bond=[]
-    
-    for i in range(L-1):
-          H_bond.append(H_Peier_bond(psi, g, J, Omega,V, (2*i+1)*h, (2*i+2)*h, L))
-   
-    Suz_trot_im(psi, delta_t_im, max_error_E, N_steps, H_bond, trunc_param, L, Id)
-    with open(ID+'imTEBD.pkl', 'wb') as f:
-          pickle.dump(psi, f)
-          
-          # Then iterate starting from the Ansatz generated
-    """
-    N_steps=[ 10]
-    delta_t_im=[ 1.e-5]
-    trunc_param={'chi_max':120,'svd_min': 1.e-13, 'verbose': False}
-    max_error_E=[ 1.e-6]
-    for g0 in gs:
-        ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)+'g_0'+str(g0)
-        g=g0/np.sqrt(L)
-        H_bond=[]
-        for i in range(L-1):
-          H_bond.append(H_Peier_bond(psi, g, J, Omega,V, (2*i+1)*h, (2*i+2)*h, L))
-        Suz_trot_im(psi, delta_t_im, max_error_E, N_steps, H_bond, trunc_param, L, Id)
-        with open(ID+'imTEBD.pkl', 'wb') as f:
-          pickle.dump(psi, f)
-
-
