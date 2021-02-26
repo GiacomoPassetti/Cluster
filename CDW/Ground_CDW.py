@@ -33,6 +33,7 @@ from tenpy.models.fermions_spinless import FermionModel
 from tenpy.algorithms.tebd import Engine
 import pickle
 from tenpy.linalg.charges import LegCharge, ChargeInfo
+from tenpy.algorithms.tebd import Engine
 
 def sites(L,Nmax):
  FSite=FermionSite('N', filling=0.5)
@@ -69,35 +70,39 @@ g_0=0.1
 g=g_0/np.sqrt(L)
 Nmax=20
 Omega=10
+J=1
 h=0
-V=0
+W=5.0
 mu=0
 steps=40
-sites_f=sites_f(L)
+sit=sites_f(L)
 ps=product_state_f(L)
-psi_f=MPS.from_product_state(sites_f, ps)
+psi_f=MPS.from_product_state(sit, ps)
 
-model_params={'bc_MPS':'finite', 'bc_x':'open', 'explicit_plus_hc':True, 'lattice':'Chain', 'J':J, 'conserve':'N', 'V':V, 'mu':mu, 'L':L}
+model_params={'bc_MPS':'finite', 'bc_x':'open', 'explicit_plus_hc':True, 'lattice':'Chain', 'J':J, 'conserve':'N', 'V':0, 'mu':mu, 'L':L}
 FC=tenpy.models.fermions_spinless.FermionChain(model_params)
+for i in range(L-2):
+    FC.add_coupling_term(W, i, i+1,'dN', 'dN')
+    
+    
 
 verbose=True
 dmrg_params = {
         'mixer': True,  # setting this to True is essential for the 1-site algorithm to work.
-        'max_E_err': 1.e-18,
+        'max_E_err': 1.e-10,
         'trunc_params': {
-            'chi_max': 120,
-            'svd_min': 1.e-12
+            'chi_max': 30,
+            'svd_min': 1.e-10
         },
-        'verbose': verbose,
         'combine': False,
-         # specifies single-site
+        'active_sites': 2  # specifies single-site
     }
-#info = dmrg.run(psi_f, FC, dmrg_params)
+info = dmrg.run(psi_f, FC, dmrg_params)
+plt.plot(psi_f.expectation_value('N'))
+#with open('Psi_GS_Nmax_20L_8Omega_10J_1h_0V_0g_00.1imTEBD.pkl', 'rb') as f:
+    #psi = pickle.load(f)
 
-with open('Psi_GS_Nmax_20L_8Omega_10J_1h_0V_0g_00.1imTEBD.pkl', 'rb') as f:
-    psi = pickle.load(f)
-
-Iterative_g_from_load(psi, 0.1, 1, 0.05, L, Omega, J, h, V, Nmax)
+#Iterative_g_from_load(psi, 0.1, 1, 0.05, L, Omega, J, h, V, Nmax)
 
 
        

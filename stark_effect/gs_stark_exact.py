@@ -159,13 +159,14 @@ def plot_stark_absolute_eh(gmin, gmax, steps, Omega, J, h):
     np.save('N_avg_bosEXACT_Stark'+ID, fot_avg)
 
 
-def GS(g, J, Omega):
-        w, v= eigh(stark_open(g,Omega, J, h), eigvals_only=False) 
+def GS(g, J, Omega, h):
+        w, v= eigh(stark_open(g,Omega, J, h, mu), eigvals_only=False) 
 
         oc=0
         for i in range(Fock):
             print(i)
             GS=Vector(v[:, i])
+            energy=w[i]
             oc=sum(GS.Nf())
             if abs(oc-filling)<0.00001:
                 break
@@ -173,11 +174,11 @@ def GS(g, J, Omega):
                 continue
 
         
-        return  GS
+        return  GS, energy
     
     
 
-Omega, J, g, Nmax, L = 0.5,1,0,8,8
+Omega, J, g, Nmax, L = 1,1,1,12,6
 h=1
 mu=0
 filling=int(L/2)
@@ -188,11 +189,9 @@ B, Bd, Nb, Idb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).B.to_ndarray(), 
 NNb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).NN.to_ndarray()
 
 
-#Lets Find the peak
-for L in [6, 8]:
-  Fock=(Nmax+1)*(2**L)
-  ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
-  plot_stark(0, 4, 0.2, Omega, J, h, mu)
+gs, energy=GS(g, J, Omega, h)
+plt.plot(gs.Nf())
+print(gs.Nb(), energy)
 
 
 

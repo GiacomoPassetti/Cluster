@@ -108,7 +108,7 @@ def stark_open(g,Omega,J, h):
         hop_L[i+2]=Cd
         kin=kin+ Operator_builder(hop_L)[1]+Operator_builder(hop_R)[1]
     stark=np.zeros((Fock, Fock))
-    for i in range(L-1):
+    for i in range(L):
         ons=[Idb]+[Idf]*L
         ons[i+1]=h*(i+1)*Nf
         stark=stark+ Operator_builder(ons)[1]
@@ -144,20 +144,37 @@ def plot_ph_av(gmin, gmax, steps, Omega, J):
     plt.show
     np.save('C:/users/giaco/Desktop/Cluster/Exact_Diagonalization/Data/N_avg_bosEXACT'+ID, fot_avg)
     
-def Ground_state_peier(g, J, Omega):
+def Ground_state_peier(g, J, Omega, Filling):
         w, v= eigh(Peier_open(g,Omega, J), eigvals_only=False) 
         vectors=[]
         oc=0
         for i in range(Fock):
             print(i)
-            vectors.append(Vector(v[:, i]))
-            oc=sum(vectors[i].Nf())
-            GS=vectors[i]
+            GS=Vector(v[:, i])
+            oc=sum(GS.Nf())
+            
             E_gs=w[i]
             if abs(oc-filling)<0.00001:
                 break
             else:
                 continue
+        return GS, E_gs
+    
+def Ground_state_stark(g, J, Omega, h,  Filling):
+        w, v= eigh(stark_open(g,Omega, J, h), eigvals_only=False) 
+        vectors=[]
+        oc=0
+        for i in range(Fock):
+            print(i)
+            GS=Vector(v[:, i])
+            oc=sum(GS.Nf())
+            
+            E_gs=w[i]
+            if abs(oc-filling)<0.00001:
+                break
+            else:
+                continue
+        return GS, E_gs
         
     
     
@@ -194,7 +211,7 @@ def plot_stark(gmin, gmax, steps, Omega, J, h):
     
     
 
-Omega, J, g, Nmax, L = 1,1,1,6,8
+Omega, J, g, Nmax, L = 1,1,1,12,6
 filling=int(L/2)
 ID='Omega_'+str(Omega)+'J_'+str(J)+' g_'+str(g)+' Nmax_'+str(Nmax)+' L_'+str(L)
 Fock=(Nmax+1)*(2**L)
@@ -212,11 +229,9 @@ hf=Vector(vec_builder([Vac_b]+[empty]*int(L/2)+ [full]*int(L/2))[1].reshape(Fock
 
 
 
-
         
 
 
-plot_stark(0, 2, 0.05, 1, 1, 1)
 
 
 
