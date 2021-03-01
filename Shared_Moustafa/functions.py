@@ -25,7 +25,7 @@ import pickle
 import matplotlib.pyplot as plt
 import time
 
-def sites(L,Nmax):
+def sites(L,Nmax):  #Define the sites of the MPS
  FSite=FermionSite('N', filling=0.5)
  qflat=[[0]]*(Nmax+1)
  ch=ChargeInfo([1], names=None)
@@ -40,28 +40,13 @@ def sites(L,Nmax):
 
 
 
-def product_state(L):
+def product_state(L):# Creates a list where you define every single state of the chain, in this empty full staggered
     ps=['vac']
     for i in range(int(L/2)):
         ps.append('empty')
         ps.append('full')
     return ps
 
-def last_site(L):
-    ps=['vac']
-    for i in range(int(L-1)):
-        ps.append('empty')
-    ps.append('full')
-    return ps
-
-def first_site(L):
-    ps=['vac']
-    ps.append('full')
-    for i in range(int(L-2)):
-        ps.append('empty')
-    
-    ps.append('full')
-    return ps
 def left(L):
     ps=['vac']
     
@@ -71,15 +56,8 @@ def left(L):
         ps.append('empty')
 
     return ps
-def mixed_state(L):
-    ps=['vac']
-    ms = np.array([1/np.sqrt(2), 1/np.sqrt(2)])
-    for i in range(int(L/2)):
-        ps.append(ms)
-        ps.append(ms)
-    return ps
 
-def H_Peier_bond(psi, g, J, Omega, V, h1, h2, L):
+def H_Peier_bond(psi, g, J, Omega, V, h1, h2, L): # This is how i define the H_bond h1 onsite left h2 right
     
     #In order to read quickly the total energy I define both the bond energy for the coupling with the cavity and for only the fermions
     Peier=npc.outer(npc.expm(1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']),npc.outer(-J*psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].C.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
@@ -93,7 +71,7 @@ def H_Peier_bond(psi, g, J, Omega, V, h1, h2, L):
 
 
 
-def U_bond(dt, H_bond):
+def U_bond(dt, H_bond): #Just the exponential of a bond
     
     H2 = H_bond.combine_legs([('p0', 'p1', 'p2'), ('p0*', 'p1*', 'p2*')], qconj=[+1, -1])
     H2= (-dt)*H2
@@ -146,20 +124,8 @@ def from_full_custom(
 
 
 
-def ansatz_wf(Nmax, L):
+def ansatz_wf(Nmax, L): #Builds the MPS (The MPS class is very rich of functions that i use everywhere)
     ps= product_state(L)
-    site= sites(L,Nmax)
-    psi=MPS.from_product_state(site, ps)
-    return psi
-
-def ansatz_last(Nmax, L):
-    ps=last_site(L)
-    site= sites(L,Nmax)
-    psi=MPS.from_product_state(site, ps)
-    return psi
-
-def ansatz_first(Nmax, L):
-    ps=first_site(L)
     site= sites(L,Nmax)
     psi=MPS.from_product_state(site, ps)
     return psi
@@ -170,7 +136,8 @@ def ansatz_left(Nmax, L):
     psi=MPS.from_product_state(site, ps)
     return psi
 
-def apply_local_cav_r(psi, i, op, trunc_param):
+
+def apply_local_cav_r(psi, i, op, trunc_param): # Apply H_bond on site i and the swap right
             
             cutoff=1.e-13
             "1--  Applico U"
@@ -203,7 +170,7 @@ def apply_local_cav_r(psi, i, op, trunc_param):
             
 
 
-def apply_local_cav_end(psi, i, op, trunc_param):
+def apply_local_cav_end(psi, i, op, trunc_param): # apply H_bond on site i and then no swap
             cutoff=1.e-13
             "1--  Applico U"
 
@@ -226,7 +193,7 @@ def apply_local_cav_end(psi, i, op, trunc_param):
             return err
 
 
-def apply_local_cav_l(psi, i, op, trunc_param):
+def apply_local_cav_l(psi, i, op, trunc_param): # Apply swao on site i-1 and then swap left
             i=i-1
             cutoff=1.e-13
             "1--  Genero theta e swappo left"
@@ -259,7 +226,7 @@ def apply_local_cav_l(psi, i, op, trunc_param):
             return err
             
 
-def Energy(psi, H_bond, L, trunc_param):
+def Energy(psi, H_bond, L, trunc_param): # Evaluates The energy
          
         E=[]
 
@@ -303,89 +270,12 @@ def full_sweep(psi, step, U, Id, trunc_param, L):
     eps += apply_local_cav_l(psi, L-3-2*i, Id, trunc_param)
   return eps
 
-def full_sweep_energy(psi, step, U, Id, trunc_param, L):
-  e=0
-  for _ in range(step):
-      
 
-   for i in range((L-2)//2):
-     
-     apply_local_cav_r(psi, 2*i, Id, trunc_param) 
-     e+= psi.expectation_value(U[2*i+1], [2*i+1])
-     apply_local_cav_r(psi, 2*i+1, Id, trunc_param)  
-   
-   e+= psi.expectation_value(U[-1], [L-2])
-   
-   for i in range((L-2)//2):
-    
-    apply_local_cav_l(psi, L-2-2*i, U[-2-2*i], trunc_param)
-    e+= psi.expectation_value(U[-1-2*i], [-1-2*i])
-    apply_local_cav_l(psi, L-3-2*i, Id, trunc_param)
-  return e
 
-def full_sweep_second(psi, step, U, Id, trunc_param, L):
-  eps=TruncationError()
-
-  for _ in range(step):
-      
-
-   for i in range((L-2)//2):
-     
-     eps += apply_local_cav_r(psi, 2*i, U[2*i], trunc_param) 
-     eps += apply_local_cav_r(psi, 2*i+1, Id, trunc_param)  
-   
-   eps += apply_local_cav_end(psi, L-2, U[L-2], trunc_param)
-   for i in range((L-2)//2):
-    
-    eps += apply_local_cav_l(psi, L-2-2*i, U[-2-2*i], trunc_param)
-    eps += apply_local_cav_l(psi, L-3-2*i, Id, trunc_param)
-   for i in range((L-2)//2):
-     
-     eps += apply_local_cav_r(psi, 2*i, U[2*i], trunc_param) 
-     eps += apply_local_cav_r(psi, 2*i+1, Id, trunc_param)  
-   
-   eps += apply_local_cav_end(psi, L-2, U[L-2], trunc_param)
-   for i in range((L-2)//2):
-    
-    eps += apply_local_cav_l(psi, L-2-2*i, Id, trunc_param)
-    eps += apply_local_cav_l(psi, L-3-2*i, Id, trunc_param)
-  return eps
     
 
 
 def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
- start_time=time.time()
- DeltaE=2*max_error_E
- E_old=Energy(psi, H_bond, L, trunc_param)
- 
- for dt in range(len(delta_t)):
-    print("delta_tau =", delta_t[dt], "Time of evaluation:", time.time()-start_time)
-
-    U=[]
-    for i in range(L-1):
-        U.append(U_bond(delta_t[dt], H_bond[i]))
-    DeltaE= 2*max_error_E[dt]
-    step=0
-    while (DeltaE > max_error_E[dt]):
-    
-      
-      full_sweep(psi, N_steps[dt], U, Id, trunc_param, L)
-      
-      
-        
-
-      step += N_steps[dt]
-      E=Energy(psi, H_bond, L, trunc_param)
-      DeltaE=np.abs(E_old-E)
-      E_old=E
-      if step > 1200:
-          break
-
-      
-      print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
-
-      
-def Suz_trot_im_try(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
  start_time=time.time()
  DeltaE=2*max_error_E
  E_old=Energy(psi, H_bond, L, trunc_param)
@@ -402,42 +292,7 @@ def Suz_trot_im_try(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, 
     
       
       eps += full_sweep(psi, N_steps[dt], U, Id, trunc_param, L)
-      print(psi.expectation_value('N', [0]))
-      plt.plot(psi.expectation_value('N', [1,2,3,4,5,6]))
-      plt.show()
-        
-
-      step += N_steps[dt]
-      E=Energy(psi, H_bond, L, trunc_param)
-      DeltaE=np.abs(E_old-E)
-      E_old=E
-      if step > 1200:
-          break
-
-      
-      print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
- return eps 
-
-def Suz_trot_im_second(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
- start_time=time.time()
- DeltaE=2*max_error_E
- E_old=Energy(psi, H_bond, L, trunc_param)
  
- for dt in range(len(delta_t)):
-    print("delta_tau =", delta_t[dt], "Time of evaluation:", time.time()-start_time)
-
-    U=[]
-    for i in range(L-1):
-        U.append(U_bond(delta_t[dt], H_bond[i]))
-    DeltaE= 2*max_error_E[dt]
-    step=0
-    while (DeltaE > max_error_E[dt]):
-    
-      
-      full_sweep_second(psi, N_steps[dt], U, Id, trunc_param, L)
-      print(psi.expectation_value('N', [0]))
-      
-      
         
 
       step += N_steps[dt]
@@ -449,6 +304,9 @@ def Suz_trot_im_second(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, 
 
       
       print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
+ return eps
+      
+
 
 
 

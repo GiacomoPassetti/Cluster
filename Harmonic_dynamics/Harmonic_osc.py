@@ -70,9 +70,7 @@ def plot_g(gmin, gmax, steps):
     t=np.arange(0,tmax+dt, dt)
     for g in [0,0.5,1,2]:
         a=cosa(g,T,Omega)
-        b=sum(a)/(100*tmax)
-        for i in range(len(a)):
-            a[i]=b
+        
         plt.plot(t, a)
     plt.legend(['g=0', 'g=0.5', 'g=1', 'g=2'])
     plt.xlabel('t')
@@ -131,7 +129,7 @@ tmax=5
 B, Bd, Nb, Idb = BosonSite(Nmax=Nmax,conserve=None, filling=0 ).B.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Bd.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).N.to_ndarray(), BosonSite(Nmax=Nmax,conserve=None, filling=0 ).Id.to_ndarray()
 vac=np.zeros(Nmax+1)
 vac[0]=1  
-T=-5
+T=-16
 g=10
 dt=0.01
 Omega=10
@@ -207,7 +205,7 @@ plt.legend(['<n>=0','<n>=1','<n>=5','<n>=10','<n>=25'])
 """
 
 
-
+plot_g(0, 2, 0.5)
 
 
         

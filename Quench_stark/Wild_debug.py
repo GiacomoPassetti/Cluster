@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Feb 21 20:09:40 2021
+Created on Fri Feb 26 10:20:39 2021
 
 @author: giaco
 """
+
 import sys
 sys.path.append('C:/Users/giaco/Desktop/Cluster/Quench_stark')
 
@@ -295,12 +296,17 @@ def full_sweep(psi, step, U, Id, trunc_param, L):
      
      eps += apply_local_cav_r(psi, 2*i, U[2*i], trunc_param) 
      eps += apply_local_cav_r(psi, 2*i+1, Id, trunc_param)  
+     
+     
    
    eps += apply_local_cav_end(psi, L-2, U[-1], trunc_param)
+   
+   
    for i in range((L-2)//2):
     
     eps += apply_local_cav_l(psi, L-2-2*i, U[-2-2*i], trunc_param)
     eps += apply_local_cav_l(psi, L-3-2*i, Id, trunc_param)
+    
   return eps
 
 def full_sweep_energy(psi, step, U, Id, trunc_param, L):
@@ -357,7 +363,7 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
  start_time=time.time()
  DeltaE=2*max_error_E
  E_old=Energy(psi, H_bond, L, trunc_param)
- 
+ eps=TruncationError()
  for dt in range(len(delta_t)):
     print("delta_tau =", delta_t[dt], "Time of evaluation:", time.time()-start_time)
 
@@ -369,8 +375,9 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
     while (DeltaE > max_error_E[dt]):
     
       
-      full_sweep(psi, N_steps[dt], U, Id, trunc_param, L)
-      
+      eps += full_sweep(psi, N_steps[dt], U, Id, trunc_param, L)
+      plt.plot(psi.expectation_value('N', [1,2,3,4]))
+      plt.show()
       
         
 
@@ -383,7 +390,7 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
 
       
       print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
-
+ return eps
       
 def Suz_trot_im_try(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
  start_time=time.time()
@@ -436,7 +443,7 @@ def Suz_trot_im_second(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, 
       
       full_sweep_second(psi, N_steps[dt], U, Id, trunc_param, L)
       print(psi.expectation_value('N', [0]))
-      
+      plt.show()
       
         
 
@@ -449,6 +456,3 @@ def Suz_trot_im_second(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, 
 
       
       print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
-
-
-
