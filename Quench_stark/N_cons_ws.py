@@ -5,7 +5,7 @@ Created on Sun Feb 21 20:09:40 2021
 @author: giaco
 """
 import sys
-sys.path.append('C:/Users/giaco/Desktop/Cluster/Quench_stark')
+
 
 import tenpy
 import copy
@@ -22,7 +22,7 @@ from tenpy.algorithms.truncation import truncate, svd_theta, TruncationError
 import tenpy.linalg.np_conserved as npc
 from scipy.linalg import expm
 import pickle
-import matplotlib.pyplot as plt
+
 import time
 
 def sites(L,Nmax):
@@ -323,33 +323,7 @@ def full_sweep_energy(psi, step, U, Id, trunc_param, L):
     apply_local_cav_l(psi, L-3-2*i, Id, trunc_param)
   return e
 
-def full_sweep_second(psi, step, U, Id, trunc_param, L):
-  eps=TruncationError()
 
-  for _ in range(step):
-      
-
-   for i in range((L-2)//2):
-     
-     eps += apply_local_cav_r(psi, 2*i, U[2*i], trunc_param) 
-     eps += apply_local_cav_r(psi, 2*i+1, Id, trunc_param)  
-   
-   eps += apply_local_cav_end(psi, L-2, U[L-2], trunc_param)
-   for i in range((L-2)//2):
-    
-    eps += apply_local_cav_l(psi, L-2-2*i, U[-2-2*i], trunc_param)
-    eps += apply_local_cav_l(psi, L-3-2*i, Id, trunc_param)
-   for i in range((L-2)//2):
-     
-     eps += apply_local_cav_r(psi, 2*i, U[2*i], trunc_param) 
-     eps += apply_local_cav_r(psi, 2*i+1, Id, trunc_param)  
-   
-   eps += apply_local_cav_end(psi, L-2, U[L-2], trunc_param)
-   for i in range((L-2)//2):
-    
-    eps += apply_local_cav_l(psi, L-2-2*i, Id, trunc_param)
-    eps += apply_local_cav_l(psi, L-3-2*i, Id, trunc_param)
-  return eps
     
 
 
@@ -385,70 +359,8 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
       print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
 
       
-def Suz_trot_im_try(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
- start_time=time.time()
- DeltaE=2*max_error_E
- E_old=Energy(psi, H_bond, L, trunc_param)
- eps=TruncationError()
- for dt in range(len(delta_t)):
-    print("delta_tau =", delta_t[dt], "Time of evaluation:", time.time()-start_time)
 
-    U=[]
-    for i in range(L-1):
-        U.append(U_bond(delta_t[dt], H_bond[i]))
-    DeltaE= 2*max_error_E[dt]
-    step=0
-    while (DeltaE > max_error_E[dt]):
-    
-      
-      eps += full_sweep(psi, N_steps[dt], U, Id, trunc_param, L)
-      print(psi.expectation_value('N', [0]))
-      plt.plot(psi.expectation_value('N', [1,2,3,4,5,6]))
-      plt.show()
-        
 
-      step += N_steps[dt]
-      E=Energy(psi, H_bond, L, trunc_param)
-      DeltaE=np.abs(E_old-E)
-      E_old=E
-      if step > 1200:
-          break
-
-      
-      print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
- return eps 
-
-def Suz_trot_im_second(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
- start_time=time.time()
- DeltaE=2*max_error_E
- E_old=Energy(psi, H_bond, L, trunc_param)
- 
- for dt in range(len(delta_t)):
-    print("delta_tau =", delta_t[dt], "Time of evaluation:", time.time()-start_time)
-
-    U=[]
-    for i in range(L-1):
-        U.append(U_bond(delta_t[dt], H_bond[i]))
-    DeltaE= 2*max_error_E[dt]
-    step=0
-    while (DeltaE > max_error_E[dt]):
-    
-      
-      full_sweep_second(psi, N_steps[dt], U, Id, trunc_param, L)
-      print(psi.expectation_value('N', [0]))
-      
-      
-        
-
-      step += N_steps[dt]
-      E=Energy(psi, H_bond, L, trunc_param)
-      DeltaE=np.abs(E_old-E)
-      E_old=E
-      if step > 1200:
-          break
-
-      
-      print("After", step, "steps, E_tot = ", E, "and DeltaE = ", DeltaE , "Time of evaluation:", time.time()-start_time)
 
 
 

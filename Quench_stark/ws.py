@@ -7,7 +7,7 @@ Created on Mon Mar  1 09:34:50 2021
 
 import sys
 import numpy as np
-from N_cons import ansatz_wf, Suz_trot_im, H_Peier_bond, ansatz_left, Energy, U_bond, full_sweep
+from N_cons_ws import ansatz_wf, Suz_trot_im, H_Peier_bond, ansatz_left, Energy, U_bond, full_sweep
 import time
 import tenpy.linalg.np_conserved as npc
 import pickle
