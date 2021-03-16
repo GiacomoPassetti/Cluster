@@ -132,11 +132,11 @@ vac[0]=1
 T=-16
 g=10
 dt=0.01
-Omega=10
+Omega=5
 H=cosm(g*(B+Bd))*T+(Omega*Nb)
 U=expm(-1j*dt*H)
 X=B+Bd
-
+"""
 vac=np.zeros(Nmax+1)
 vac[0]=1
 v=copy.deepcopy(vac)
@@ -157,7 +157,7 @@ a, b = scipy.optimize.curve_fit(f, Ts, ggs)
 Ts=np.asarray(Ts)
 flist=a[0]*Ts+a[1]*np.sqrt(Ts)+a[2]
 plt.plot(Ts, ggs, Ts, flist)
-
+"""
 
 
 
@@ -203,9 +203,17 @@ plt.xlabel(r'$g$')
 plt.ylabel(r'$<\cos(A)>_{vac}$')
 plt.legend(['<n>=0','<n>=1','<n>=5','<n>=10','<n>=25'])
 """
-
-
-plot_g(0, 2, 0.5)
+gs=np.arange(0,2,0.1)
+cos0=[]
+ep=[]
+for g in gs:
+  CS=cosm(g*(X))
+  v=np.zeros(Nmax+1)
+  v[0]=1
+  cos0.append(np.real_if_close(np.tensordot(v.conj().T, np.tensordot(CS, v, 1),1)))
+  ep.append(np.exp(-(g**2)/2))
+  
+plt.plot(gs,cos0,'bo',gs,ep,'r+')
 
 
         

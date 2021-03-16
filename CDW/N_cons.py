@@ -25,7 +25,7 @@ from tenpy.algorithms.truncation import truncate, svd_theta, TruncationError
 import tenpy.linalg.np_conserved as npc
 from scipy.linalg import expm
 import pickle
-
+import matplotlib.pyplot as plt
 import time
 
 def sites(L,Nmax):
@@ -94,6 +94,17 @@ def H_Peier_bond(psi, g, J, Omega, V, h1, h2, L):
     H_bond=Peier+Peier_hc+cav+ons_l+ons_r+rep  #This is the energetic term that will be used in the TEBD algorithm
     return  H_bond
 
+def H_Peier_bond_dn(psi, g, J, Omega, V, L):
+    
+    #In order to read quickly the total energy I define both the bond energy for the coupling with the cavity and for only the fermions
+    Peier=npc.outer(npc.expm(1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']),npc.outer(-J*psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].C.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
+    Peier_hc=npc.outer(npc.expm(-1j*g*(psi.sites[0].B+psi.sites[0].Bd)).replace_labels(['p', 'p*'], ['p0', 'p0*']), npc.outer(-J*psi.sites[1].C.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Cd.replace_labels(['p', 'p*'], ['p2', 'p2*']))).itranspose([0,2,4,1,3,5])
+    cav=npc.outer((Omega/((L-1)))*psi.sites[0].N.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
+    
+    rep=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(V*psi.sites[1].dN.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].dN.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
+    
+    H_bond=Peier+Peier_hc+cav+rep  #This is the energetic term that will be used in the TEBD algorithm
+    return  H_bond
 
 
 def U_bond(dt, H_bond):
@@ -325,8 +336,9 @@ def Suz_trot_im(psi, delta_t, max_error_E, N_steps, H_bond, trunc_param, L, Id):
     
       
       full_sweep(psi, N_steps[dt], U, Id, trunc_param, L)
-
-      
+      print(psi.correlation_function('N', 'N', sites1=[1], sites2=range(1, L+1)))
+      plt.plot(psi.expectation_value('N'))
+      plt.show()
         
 
       step += N_steps[dt]
@@ -389,7 +401,7 @@ def Iterative_g(psi_f, g1, g2, step, L, Omega, J, h, V, Nmax):
           pickle.dump(psi, f)
 
 
-def Iterative_g_from_load(psi, g1, g2, step, L, Omega, J, h, V, Nmax):
+def Iterative_g_from_load(psi, g1, g2, step, L, Omega, J, h, V, Nmax, N_steps, delta_t_im, trunc_param, max_error):
     
     siti = sites(L,Nmax)
     ps= product_state(L)

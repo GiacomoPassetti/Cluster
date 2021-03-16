@@ -8,7 +8,7 @@ Created on Tue Feb 23 11:37:14 2021
 import numpy as np
 import matplotlib.pyplot as plt
 def datas(L, g_0):
-  ID='D:/Data_Spinless_Boson-main/Quench_stark/Quench_ws_Nmax'+str(20)+'L_'+str(L)+'Omega_'+str(10)+'J_'+str(1)+'h_'+str(1)+'V_'+str(0)+'g_0'+str(g_0)
+  ID='D:/Data_Spinless_Boson-main/Quench_stark/Quench_ws_Nmax'+str(15)+'L_'+str(L)+'Omega_'+str(10)+'J_'+str(1)+'h_'+str(1)+'V_'+str(0)+'g_0'+str(g_0)
   n=np.load(ID+'n_av.npy')
   nn=np.load(ID+'NN.npy')
   A=np.load(ID+'A.npy')
@@ -37,11 +37,11 @@ def plot_photons(L, g1, g2, g3):
    plt.legend(['g='+str(g1),'g='+str(g2), 'g='+str(g3) ])
    plt.savefig('Plot_nav_L_'+str(L))
    
-n_i_t=datas(30, 2.0)[0]
-print(n_i_t[0,30])
-n=np.zeros((200,40))
+n_i_t=datas(20, 0.0)[0]
+print(n_i_t[0,20])
+n=np.zeros((200,20))
 for i in range(200):
-    for j in range(40):
+    for j in range(20):
         n[i,j]=n_i_t[i,j+1]
 
 
@@ -58,5 +58,4 @@ plt.ylabel('time g='+str(2))
 
 plt.colorbar().set_label('Occupancy $N$')
 
-   
    
