@@ -1,7 +1,9 @@
-for L in  24 
+for epsilon in 0 0.1 0.001 0.0001 
 do
-for g0 in 0.3 0.4 0.5   
+for J in 0 1    
 do 
+for hmax in 1 5 10 20
+do
  
 
 echo "#!/usr/local_rwth/bin/zsh
@@ -29,7 +31,7 @@ export MKL_NUM_THREADS
 
 
 export PYTHONPATH=$HOME/TeNPy
-python3 qstark.py $L $g0
+python3 main.py $epsilon $J $hmax
 
 
 echo \$?
@@ -39,6 +41,7 @@ date
 
 sbatch <$HOME/Spinless_Boson/Quench_stark/Bash/addBash_STARK$L.$g0
 
+done
 done
 done
 

@@ -9,8 +9,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 Omega=10
-L=12
+L=10
 a=np.load('C:/Users/giaco/Desktop/Cluster/CDW/Quench_Exact/Phase_transition_data/Phase_transitionsU_0-2__g_0-2___Omega_'+str(Omega)+'.0deviations.npy')
+b=np.load('C:/Users/giaco/Desktop/Cluster/CDW/Quench_Exact/Phase_transition_data/Phase_transitionsU_0-2__g_0-2___Omega_10.0n_ph.npy')
+print(b.shape, a.shape)
 
 
 """
@@ -79,7 +81,7 @@ plt.ylabel(r'$U$')
 plt.colorbar().set_label(r'$\sum_{i}(n_{i}-\frac{1}{2})^{2}$')
 """
 
-
+"""
 ID='C:/Users/giaco/Desktop/Cluster/CDW/Quench_Exact/Phase_transition_data/Phase_transitionsU_0-2__g_0-2___Omega_'+str(Omega)+'.0deviations.npy'
 a=np.load('C:/Users/giaco/Desktop/Cluster/CDW/Quench_Exact/Phase_transition_data/Phase_transitionsU_0-5__g_0-2___Omega_10.0L_12cd large_deviations___0_5.npy')
 print(a[0,0])
@@ -96,4 +98,5 @@ plt.ylabel(r'$U$')
 
 plt.colorbar().set_label(r'$\sum_{i}(n_{i}-\frac{1}{2})^{2}$')
 plt.savefig(ID+'final_plot_Omega_'+str(Omega)+'L_'+str(L)+'.png')
+"""
 

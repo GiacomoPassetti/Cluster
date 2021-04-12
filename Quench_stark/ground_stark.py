@@ -29,7 +29,7 @@ delta_t_im=[0.1, 1.e-2, 1.e-3, 1.e-4, 1.e-5, 1.e-6]
 trunc_param={'chi_max':120,'svd_min': 1.e-13, 'verbose': False}
 psi=ansatz_left(Nmax, L)
 plt.plot(psi.expectation_value('N'))
-Id=ons_r=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
+Id=npc.outer(psi.sites[0].Id.replace_labels(['p','p*'],['p0', 'p0*']),npc.outer(psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p2', 'p2*'])) ).itranspose([0,2,4,1,3,5])
 H_bond=[H_Peier_bond(psi, g, J, Omega,V, h,h/2, L)]
 for i in range(L-3):
    H_bond.append(H_Peier_bond(psi, g, J, Omega,V, (i+2)*h/2,(i+3)*h/2, L))
