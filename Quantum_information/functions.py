@@ -34,6 +34,31 @@ def sites(L):
      sites.append(FSite)
  return sites
 
+def Quantum_gates(psi):
+    Id = psi.sites[0].Id
+    Sx =2* psi.sites[0].Sx
+    Sz =2* psi.sites[0].Sz
+    Sy =2* psi.sites[0].Sy
+    CNOT = npc.outer(0*psi.sites[0].Id.replace_labels(['p', 'p*'], ['p0', 'p0*']),0*psi.sites[1].Sx.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3]) 
+    CNOT[0,0,0,0] = 1
+    CNOT[1,0,1,0] = 1
+    CNOT[0,1,1,1] = 1
+    CNOT[1,1,0,1] = 1
+    SWAP = npc.outer(0*psi.sites[0].Id.replace_labels(['p', 'p*'], ['p0', 'p0*']),0*psi.sites[1].Sx.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3]) 
+    SWAP[1,0,0,1] = 1
+    SWAP[0,1,1,0] = 1
+    SWAP[1,1,1,1] = 1
+    SWAP[0,0,0,0] = 1
+
+    CZ = npc.outer(0*psi.sites[0].Id.replace_labels(['p', 'p*'], ['p0', 'p0*']),0*psi.sites[1].Sx.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3]) 
+    CZ[1,0,1,0] = 1
+    CZ[0,1,0,1] = 1
+    CZ[0,0,0,0] = 1
+    CZ[1,1,1,1] = -1
+
+    Hadamard =   (1/np.sqrt(2))*(Sx + Sz)  
+    return Id, Sx, Sy, Sz, CNOT, SWAP, CZ, Hadamard
+
 
 
 def random_product_state(L):
@@ -46,7 +71,7 @@ def random_product_state(L):
 def Bond_id(psi, L):
     Id=npc.outer(psi.sites[0].Id.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])
     return Id
-def H_spin(psi, J, h1, h2, L):
+def H_lutt(psi, J, h1, h2, L):
     
     
     sp=npc.outer(J*psi.sites[0].Sp.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Sm.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])
@@ -56,19 +81,42 @@ def H_spin(psi, J, h1, h2, L):
     H_bond=sp+sm+ons_l+ons_r  
     return  H_bond
 
+def H_vector(psi, J, h1, h2, L):
+    
+    
+    sxx=npc.outer(J*psi.sites[0].Sx.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Sx.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])
+    syy=npc.outer(J*psi.sites[0].Sy.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Sy.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])
+    szz=npc.outer(J*psi.sites[0].Sz.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Sz.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])
+    ons_l=npc.outer(h1*psi.sites[0].Sz.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])
+    ons_r=npc.outer(psi.sites[0].Id.replace_labels(['p', 'p*'], ['p0', 'p0*']),h2*psi.sites[1].Sz.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])
+    H_bond=sxx+syy+szz+ons_l+ons_r  
+    return  H_bond
+
 def H_bonds_random(psi, J, L, hmax):
     randi=[]
     for i in range(L):
         randi.append((random.random()*hmax)-(hmax/2))
     H_B=[None]
-    H_B.append(H_spin(psi, J, randi[0], randi[1]/2, L))
+    H_B.append(H_vector(psi, J, randi[0], randi[1]/2, L))
     for i in range(L-3):
-        H_B.append(H_spin(psi, J, randi[i+1], randi[i+2]/2, L))
-    H_B.append(H_spin(psi, J, randi[L-2], randi[L-1]/2, L))
+        H_B.append(H_vector(psi, J, randi[i+1], randi[i+2]/2, L))
+    H_B.append(H_vector(psi, J, randi[L-2], randi[L-1]/2, L))
     return H_B
     
+def H_bonds_random_randi(psi, J, L, hmax, randi):
+    
+    H_B=[None]
+    H_B.append(H_vector(psi, J, randi[0]*hmax-hmax/2, (randi[1]*hmax/2)-hmax/2, L))
+    for i in range(L-3):
+        H_B.append(H_vector(psi, J, randi[i+1], randi[i+2]/2, L))
+    H_B.append(H_vector(psi, J, randi[L-2], randi[L-1]/2, L))
+    return H_B
         
-
+def error_op(psi, dt, epsilon):
+    op = npc.outer(epsilon*psi.sites[0].Sx.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])+npc.outer(epsilon*psi.sites[0].Id.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Sx.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])
+    op_epsilon=U_bond(1j*dt, op)
+    return op_epsilon
+    
 
 def U_bond(dt, H_bond):
     
@@ -128,10 +176,15 @@ def random_wf(L):
     site= sites(L)
     psi=MPS.from_product_state(site, ps)
     return psi
+def pol_wf(L, s):
+    ps= [s]*L
+    site= sites(L)
+    psi=MPS.from_product_state(site, ps)
+    return psi
 
-def random_swap(psi, trunc_param, L, epsilon):
+def random_swap(psi, trunc_param, L, epsilon, op):
     inter=random.randint(0, L-2)
-    op=Bond_id(psi, L)+npc.outer(epsilon*psi.sites[0].Sx.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])+npc.outer(epsilon*psi.sites[0].Id.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Sx.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])
+    op = Bond_id(psi, L)+npc.outer(epsilon*psi.sites[0].Sx.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Id.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])+npc.outer(epsilon*psi.sites[0].Id.replace_labels(['p', 'p*'], ['p0', 'p0*']),psi.sites[1].Sx.replace_labels(['p', 'p*'], ['p1', 'p1*'])).itranspose([0,2,1,3])
     error=swap_op(psi, inter, op, trunc_param)
     return error
 
