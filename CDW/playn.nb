@@ -1,0 +1,130 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 12.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      3886,        122]
+NotebookOptionsPosition[      3118,        100]
+NotebookOutlinePosition[      3493,        116]
+CellTagsIndexPosition[      3450,        113]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[BoxData[
+ RowBox[{"Limit", "[", 
+  RowBox[{
+   FractionBox[
+    RowBox[{
+     RowBox[{
+      RowBox[{"(", 
+       RowBox[{"u", "+", "v"}], ")"}], 
+      SuperscriptBox["\[ExponentialE]", 
+       RowBox[{"u", "+", "v"}]]}], "-", 
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"u", "*", 
+        SuperscriptBox["\[ExponentialE]", "u"]}], "-", 
+       RowBox[{"v", "*", 
+        SuperscriptBox["\[ExponentialE]", "v"]}]}], ")"}]}], 
+    RowBox[{"u", "*", "v", "*", 
+     RowBox[{"(", 
+      RowBox[{
+       SuperscriptBox["\[ExponentialE]", "u"], "-", 
+       SuperscriptBox["\[ExponentialE]", "v"]}], ")"}]}]], ",", " ", 
+   RowBox[{"v", " ", "\[Rule]", " ", "0"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.8316274402236924`*^9, 3.8316276209588013`*^9}},
+ CellLabel->"In[2]:=",ExpressionUUID->"b32da7b0-b3e2-4c46-9163-6c9770bca578"],
+
+Cell[BoxData[
+ FractionBox[
+  RowBox[{"1", "+", 
+   RowBox[{
+    SuperscriptBox["\[ExponentialE]", "u"], " ", 
+    RowBox[{"(", 
+     RowBox[{"1", "+", "u"}], ")"}]}]}], 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{"-", "1"}], "+", 
+     SuperscriptBox["\[ExponentialE]", "u"]}], ")"}], " ", "u"}]]], "Output",
+ CellChangeTimes->{3.8316275281403294`*^9, 3.8316276254842424`*^9},
+ CellLabel->"Out[2]=",ExpressionUUID->"056d38f4-6b5f-4a0a-a65f-e0f97cef6a0c"]
+}, Open  ]],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.83164216697167*^9, 
+  3.8316421686150627`*^9}},ExpressionUUID->"c5c6c88a-9ded-4cbc-a829-\
+f0814934f468"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Limit", "[", 
+  RowBox[{
+   FractionBox[
+    RowBox[{
+     RowBox[{
+      RowBox[{"(", 
+       RowBox[{"u", "+", "v"}], ")"}], 
+      SuperscriptBox["\[ExponentialE]", 
+       RowBox[{"u", "+", "v"}]]}], "-", 
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"u", "*", 
+        SuperscriptBox["\[ExponentialE]", "u"]}], "-", 
+       RowBox[{"v", "*", 
+        SuperscriptBox["\[ExponentialE]", "v"]}]}], ")"}]}], 
+    RowBox[{"u", "*", "v", "*", 
+     RowBox[{"(", 
+      RowBox[{
+       SuperscriptBox["\[ExponentialE]", "u"], "-", 
+       SuperscriptBox["\[ExponentialE]", "v"]}], ")"}]}]], ",", " ", 
+   RowBox[{"u", " ", "\[Rule]", " ", "0"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.831642192269674*^9, 3.8316422154709473`*^9}},
+ CellLabel->"In[3]:=",ExpressionUUID->"3c7ba46b-9c1f-4b57-afaa-601be3f1ed42"],
+
+Cell[BoxData["Indeterminate"], "Output",
+ CellChangeTimes->{{3.831642196822316*^9, 3.83164221601787*^9}},
+ CellLabel->"Out[3]=",ExpressionUUID->"1ab28ac8-3f6e-46d5-ab22-18c419c78562"]
+}, Open  ]]
+},
+WindowSize->{1920, 997},
+WindowMargins->{{2152, Automatic}, {Automatic, -8}},
+Magnification:>2.6 Inherited,
+FrontEndVersion->"12.0 for Microsoft Windows (64-bit) (April 8, 2019)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 838, 23, 159, "Input",ExpressionUUID->"b32da7b0-b3e2-4c46-9163-6c9770bca578"],
+Cell[1421, 47, 466, 13, 155, "Output",ExpressionUUID->"056d38f4-6b5f-4a0a-a65f-e0f97cef6a0c"]
+}, Open  ]],
+Cell[1902, 63, 153, 3, 74, "Input",ExpressionUUID->"c5c6c88a-9ded-4cbc-a829-f0814934f468"],
+Cell[CellGroupData[{
+Cell[2080, 70, 836, 23, 125, "Input",ExpressionUUID->"3c7ba46b-9c1f-4b57-afaa-601be3f1ed42"],
+Cell[2919, 95, 183, 2, 149, "Output",ExpressionUUID->"1ab28ac8-3f6e-46d5-ab22-18c419c78562"]
+}, Open  ]]
+}
+]
+*)
+

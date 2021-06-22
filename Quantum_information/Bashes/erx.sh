@@ -1,21 +1,12 @@
-for L in 20 30
-do
-for eps in 0.01 
-do
-for iter in 5
-do
-for rr in 1 2 3 4
+for IT in 1 2 3 4 5
 do 
-for tmax in 10
-do
- 
-
+for eps in 0.1 0.01
 echo "#!/usr/local_rwth/bin/zsh
 
 
 
 
-#SBATCH --job-name=erx$L _$rr   # The job name.
+#SBATCH --job-name=err_sx$IT$eps  # The job name.
 #SBATCH -c 4                    # The number of cpu cores to use.
 #SBATCH --time=47:59:00              # The time the job will take to run.
 #SBATCH --mem-per-cpu=3200M        # The memory the job will use per cpu core.
@@ -33,19 +24,16 @@ export MKL_NUM_THREADS
 
 
 export PYTHONPATH=$HOME/TeNPy
-python3 erx.py $L $eps $iter $rr $tmax
+python3 err_sx.py $IT $eps
 
 
 echo \$?
 
 date
-" >$HOME/quantum_information/Bash/erx$L$rr
+" >$HOME/quantum_information/Bash/erx$IT$eps
 
-sbatch <$HOME/quantum_information/Bash/erx$L$rr
+sbatch <$HOME/quantum_information/Bash/erx$IT$eps
 
-done
-done
-done
 done
 done
 

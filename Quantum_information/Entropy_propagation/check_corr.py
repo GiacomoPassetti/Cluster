@@ -69,40 +69,12 @@ sxsx= npc.outer(Sx.replace_labels(['p', 'p*'], ['p0', 'p0*']),Sx.replace_labels(
 "Generating the model to perform TEBD"
 
 
-avg=[]
-for j in range(iterations):
-   randi=[]
-   for z in range(L):
-    randi.append(random.random())
-   H0=H_bonds_random_randi(psi, 1, L, hmax, randi)
-   model=NearestNeighborModel(lattice, H0)
-   eng = Engine(psi, model, options)
-   psi = pol_wf(L, 1)
-   psi1=ent_state(psi, level, L)
-   eng1 = Engine(psi1, model, options)
-   psi0=copy.deepcopy(psi1)
-   fidelty = [abs(psi0.overlap(psi1))]
-   for i in range(int(tmax/(steps*dt))):
-     eng1.run()
-     fidelty.append(abs(psi0.overlap(psi1)))
-   avg.append(fidelty)
+
+psi = pol_wf(L, 1)
+psi1=ent_state(psi, 0, L)
+
+   
+print(psi.correlation_function('Sz', 'Sz', [5], [7])) 
     
-err1 = zip(avg[0], avg[1])
-
-err1 = [x + y for (x, y) in err1] 
-
-for i in range(iterations - 2):
-    err1 = zip(err1, avg[2+i])
-
-    err1 = [x + y for (x, y) in err1] 
-
-    
- 
-err1 = [x/iterations for x in err1]
-
-np.save(ID+"avg_1.npy", err1)
-
-
-
 
 

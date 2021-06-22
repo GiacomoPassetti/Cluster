@@ -19,20 +19,21 @@ import copy
 
 
 
-L=10
+L=100
 
-J=0.01
+J=1
 
-tmax=10
+tmax=2
 dt=0.01
 steps=5
-epsilon=0.01
-chi=300
+epsilon=float(sys.argv[2])
+chi=200
 k1=1
-iterations=20
+iterations=5
+IT = int(sys.argv[1])
 trunc_param={'chi_max':chi,'svd_min': 1.e-13, 'verbose': False}
 options={'N_steps' : steps , 'dt': 0.01, 'trunc_params': trunc_param, 'order': 2, 'tau':0.01 }
-ID = "Random_algorithm_J_Error_sx_"+str(J)+"eps_"+str(epsilon)+"Iterations_"+str(iterations)+"t_max"+str(tmax)
+ID = "Random_algorithm_J_Error_sx_"+str(J)+"eps_"+str(epsilon)+"Iterations_"+str(iterations)+"t_max"+str(tmax)+"Random_IT_"+str(IT)
 
        
 
@@ -65,10 +66,10 @@ for j in range(iterations):
  randi=[]
  for z in range(L):
     randi.append(random.random())
- H0=H_bonds_random_randi(psi, 0, L, 0, randi)
- H1=H_bonds_random_randi(psi, 0, L, 0.02, randi)
- H2=H_bonds_random_randi(psi, 0, L, 2, randi)
- H3=H_bonds_random_randi(psi, 0, L, 20, randi)
+ H0=H_bonds_random_randi(psi, J, L, 0, randi)
+ H1=H_bonds_random_randi(psi, J, L, 0.02, randi)
+ H2=H_bonds_random_randi(psi, J, L, 2, randi)
+ H3=H_bonds_random_randi(psi, J, L, 20, randi)
  model0=NearestNeighborModel(lattice, H0)
  model1=NearestNeighborModel(lattice, H1)
  model2=NearestNeighborModel(lattice, H2)

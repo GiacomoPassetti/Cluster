@@ -47,7 +47,7 @@ for i in range(L):
    
 ID='Psi_GS_Nmax_'+str(Nmax)+'L_'+str(L)+'Omega_'+str(Omega)+'J_'+str(J)+'h_'+str(h)+'V_'+str(V)+'g_0'+str(g_0)
 
-#Generate the GS from the initial Ansatz
+
 occup=[]
 for i in range(int(tmax/(10*dt))):
     U=[]

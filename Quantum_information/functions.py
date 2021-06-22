@@ -34,6 +34,8 @@ def sites(L):
      sites.append(FSite)
  return sites
 
+
+
 def Quantum_gates(psi):
     Id = psi.sites[0].Id
     Sx =2* psi.sites[0].Sx
@@ -173,6 +175,18 @@ def from_full_custom(
 
 def random_wf(L):
     ps= random_product_state(L)
+    site= sites(L)
+    psi=MPS.from_product_state(site, ps)
+    return psi
+
+
+def Neel_wf(L):
+    ps = []
+    for i in range(int(L/2)):
+        ps.append(0)
+        ps.append(1)
+        
+    
     site= sites(L)
     psi=MPS.from_product_state(site, ps)
     return psi
