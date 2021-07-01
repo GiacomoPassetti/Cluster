@@ -71,8 +71,9 @@ Y= 1j*(Bd-B)
 XX=X.dot(X)
 YY=Y.dot(Y)
 Omega=0.1
-g=0.75
+g=0.1
 
+print("Indeterm, ", double_data(g, L)[0]*double_data(g, L)[1])
 
 dx = double_data(g, L)[0]
 dy = double_data(g, L)[1]
